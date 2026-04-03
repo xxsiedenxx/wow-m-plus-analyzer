@@ -45,6 +45,16 @@
     color: #a89bc2;
   }
 
+  .method-note {
+    font-size: 0.82em;
+    color: #8a7da8;
+    background: rgba(0,0,0,0.3);
+    padding: 6px 14px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-top: 10px;
+  }
+
   .form-card {
     background: linear-gradient(180deg, rgba(35,22,60,0.9) 0%, rgba(18,10,35,0.95) 100%);
     border-radius: 14px;
@@ -119,11 +129,7 @@
     transform: translateY(-1px);
   }
 
-  .analyze-btn:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-    transform: none;
-  }
+  .analyze-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 
   /* ── Loading ── */
   .loading-box {
@@ -144,8 +150,19 @@
     margin-bottom: 14px;
   }
 
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner-sm {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(128,80,200,0.25);
+    border-top-color: #c9a0ff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
 
+  @keyframes spin { to { transform: rotate(360deg); } }
   .loading-text { font-size: 1.05em; animation: pulse 1.5s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
 
@@ -166,7 +183,7 @@
   /* ── Results ── */
   #results { display: none; max-width: 1200px; margin: 0 auto; }
 
-  /* Character Banner */
+  /* ── Character Banner ── */
   .char-banner {
     display: flex;
     align-items: center;
@@ -180,9 +197,7 @@
   }
 
   .char-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
+    width: 60px; height: 60px; border-radius: 50%;
     border: 2px solid rgba(180,120,255,0.5);
     object-fit: cover;
     background: rgba(100,60,180,0.3);
@@ -190,16 +205,11 @@
   }
 
   .char-avatar-placeholder {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
+    width: 60px; height: 60px; border-radius: 50%;
     border: 2px solid rgba(180,120,255,0.5);
     background: linear-gradient(135deg, rgba(100,60,180,0.4), rgba(60,30,120,0.6));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.6em;
-    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6em; flex-shrink: 0;
   }
 
   .char-info { flex: 1; min-width: 200px; }
@@ -207,25 +217,15 @@
   .char-details { font-size: 0.9em; color: #a89bc2; }
   .char-details span { color: #e0d8f0; font-weight: 600; }
 
-  .char-meta {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-  }
-
+  .char-meta { display: flex; gap: 20px; flex-wrap: wrap; }
   .char-meta-item { text-align: center; }
   .char-meta-item .meta-val { font-size: 1.2em; font-weight: 700; color: #c9a0ff; }
   .char-meta-item .meta-lbl { font-size: 0.75em; color: #8a7da8; }
 
   .rio-link {
-    color: #8a6dba;
-    text-decoration: none;
-    font-size: 0.85em;
-    padding: 6px 14px;
-    border: 1px solid rgba(128,80,200,0.3);
-    border-radius: 8px;
-    transition: all 0.2s;
-    white-space: nowrap;
+    color: #8a6dba; text-decoration: none; font-size: 0.85em;
+    padding: 6px 14px; border: 1px solid rgba(128,80,200,0.3); border-radius: 8px;
+    transition: all 0.2s; white-space: nowrap;
   }
   .rio-link:hover { border-color: rgba(180,120,255,0.5); color: #c9a0ff; }
 
@@ -246,47 +246,35 @@
   .grade-C { color: #f0c040; }
   .grade-D { color: #ff8a5c; }
   .grade-F { color: #ff6b6b; }
-
   .grade-desc { font-size: 1.05em; color: #c0b0d8; margin-top: 10px; }
 
   .score-row {
-    display: flex;
-    justify-content: center;
-    gap: 24px;
-    flex-wrap: wrap;
-    margin-top: 20px;
+    display: flex; justify-content: center; gap: 18px;
+    flex-wrap: wrap; margin-top: 20px;
   }
 
   .score-item {
-    text-align: center;
-    padding: 12px 20px;
-    background: rgba(0,0,0,0.3);
-    border-radius: 10px;
-    min-width: 130px;
+    text-align: center; padding: 12px 18px;
+    background: rgba(0,0,0,0.3); border-radius: 10px; min-width: 120px;
   }
 
   .score-item .num { font-size: 1.75em; font-weight: 700; }
   .score-item .label { font-size: 0.82em; color: #8a7da8; margin-top: 4px; }
 
-  /* ── Dungeon Grid ── */
+  /* ── Section titles ── */
   .section-title {
-    font-size: 1.3em;
-    color: #c9a0ff;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    font-size: 1.3em; color: #c9a0ff; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
   }
   .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
+    content: ''; flex: 1; height: 1px;
     background: rgba(128,80,200,0.2);
   }
 
+  /* ── Dungeon Grid ── */
   .dungeon-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
     gap: 18px;
     margin-bottom: 24px;
   }
@@ -299,84 +287,72 @@
     transition: transform 0.2s, border-color 0.2s;
   }
   .dungeon-card:hover { transform: translateY(-2px); border-color: rgba(180,120,255,0.45); }
-  .dungeon-card.card-green { border-left: 3px solid rgba(95,232,138,0.7); }
-  .dungeon-card.card-yellow { border-left: 3px solid rgba(240,208,80,0.7); }
-  .dungeon-card.card-red { border-left: 3px solid rgba(255,107,107,0.7); }
+  .dungeon-card.card-green { border-left: 4px solid rgba(95,232,138,0.8); }
+  .dungeon-card.card-yellow { border-left: 4px solid rgba(240,208,80,0.8); }
+  .dungeon-card.card-red { border-left: 4px solid rgba(255,107,107,0.8); }
 
   .dungeon-card h3 {
-    font-size: 1.1em;
-    color: #c9a0ff;
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+    font-size: 1.1em; color: #c9a0ff; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   }
 
   .key-badge {
-    background: rgba(100,60,180,0.5);
-    color: #d0b8ff;
-    font-size: 0.72em;
-    padding: 2px 9px;
-    border-radius: 20px;
-    font-weight: 700;
+    background: rgba(100,60,180,0.5); color: #d0b8ff;
+    font-size: 0.72em; padding: 2px 9px; border-radius: 20px; font-weight: 700;
   }
 
   .status-badge {
-    font-size: 0.72em;
-    padding: 2px 9px;
-    border-radius: 20px;
-    font-weight: 700;
-    margin-left: auto;
+    font-size: 0.72em; padding: 2px 9px; border-radius: 20px;
+    font-weight: 700; margin-left: auto;
   }
   .badge-green { background: rgba(40,180,80,0.25); color: #5fe88a; }
   .badge-yellow { background: rgba(220,180,40,0.25); color: #f0d050; }
   .badge-red { background: rgba(220,60,60,0.25); color: #ff6b6b; }
 
-  .affix-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+  .affix-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
   .affix-chip {
-    font-size: 0.72em;
-    padding: 2px 8px;
-    border-radius: 12px;
-    background: rgba(80,50,130,0.4);
-    color: #b0a0d0;
+    font-size: 0.7em; padding: 2px 7px; border-radius: 12px;
+    background: rgba(80,50,130,0.4); color: #b0a0d0;
     border: 1px solid rgba(128,80,200,0.2);
   }
 
   .stat-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 7px 0;
-    border-bottom: 1px solid rgba(128,80,200,0.1);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 0; border-bottom: 1px solid rgba(128,80,200,0.1);
   }
   .stat-row:last-child { border-bottom: none; }
-  .stat-label { color: #8a7da8; font-size: 0.88em; }
+  .stat-label { color: #8a7da8; font-size: 0.88em; cursor: help; }
   .stat-value { font-size: 1.2em; font-weight: 700; }
+  .stat-comparison { font-size: 0.78em; color: #8a7da8; margin-left: 8px; }
 
   .score-bar-container { margin-top: 12px; }
   .score-bar-label {
-    font-size: 0.78em;
-    color: #8a7da8;
-    margin-bottom: 5px;
-    display: flex;
-    justify-content: space-between;
+    font-size: 0.78em; color: #8a7da8; margin-bottom: 5px;
+    display: flex; justify-content: space-between;
   }
   .score-bar-track {
-    height: 18px;
-    background: rgba(40,20,80,0.8);
-    border-radius: 9px;
-    overflow: hidden;
-    position: relative;
+    height: 18px; background: rgba(40,20,80,0.8);
+    border-radius: 9px; overflow: hidden; position: relative;
   }
   .score-bar-fill {
-    height: 100%;
-    border-radius: 9px;
+    height: 100%; border-radius: 9px;
     transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
   }
   .fill-green { background: linear-gradient(90deg, #2ea854, #5fe88a); }
   .fill-yellow { background: linear-gradient(90deg, #b08800, #f0d050); }
   .fill-red { background: linear-gradient(90deg, #a03030, #ff6b6b); }
+
+  /* Comparison row inside dungeon card */
+  .comp-inline {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 8px;
+    border: 1px solid rgba(128,80,200,0.15);
+    font-size: 0.82em;
+    color: #8a7da8;
+  }
+  .comp-inline .comp-load-text { display: flex; align-items: center; }
 
   /* ── Charts ── */
   .chart-section {
@@ -388,13 +364,86 @@
   }
 
   .chart-section h2 {
-    font-size: 1.25em;
-    color: #c9a0ff;
-    margin-bottom: 18px;
-    text-align: center;
+    font-size: 1.25em; color: #c9a0ff; margin-bottom: 6px; text-align: center;
+  }
+
+  .chart-subtitle {
+    text-align: center; font-size: 0.84em; color: #8a7da8; margin-bottom: 16px;
   }
 
   .chart-container { position: relative; height: 280px; }
+  .chart-container-tall { position: relative; height: 420px; }
+  .chart-container-med { position: relative; height: 340px; }
+
+  /* ── Peer Comparison Table ── */
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+  }
+  .comparison-table th {
+    text-align: left;
+    padding: 8px 12px;
+    color: #8a7da8;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid rgba(128,80,200,0.2);
+  }
+  .comparison-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(128,80,200,0.08);
+    vertical-align: middle;
+  }
+  .comparison-table tr:last-child td { border-bottom: none; }
+  .comparison-table tr:hover td { background: rgba(128,80,200,0.08); }
+  .comparison-table .player-name { color: #c9a0ff; font-weight: 600; }
+  .comparison-table .player-realm { color: #8a7da8; font-size: 0.85em; }
+  .comparison-table .you-row td { background: rgba(100,60,180,0.12); }
+  .comparison-table .you-row .player-name { color: #f0d050; }
+
+  /* Dungeon selector tabs */
+  .dungeon-tabs {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+  }
+  .dungeon-tab {
+    padding: 5px 14px; border-radius: 20px; font-size: 0.82em; font-weight: 600;
+    cursor: pointer; border: 1px solid rgba(128,80,200,0.3);
+    background: rgba(60,30,100,0.3); color: #a89bc2;
+    transition: all 0.2s;
+  }
+  .dungeon-tab:hover { border-color: rgba(180,120,255,0.5); color: #c9a0ff; }
+  .dungeon-tab.active {
+    background: rgba(100,60,180,0.5); color: #f0e8ff;
+    border-color: rgba(180,120,255,0.5);
+  }
+  .dungeon-tab.loading-tab { opacity: 0.6; cursor: default; }
+
+  /* Comparison panel */
+  .comp-panel { display: none; }
+  .comp-panel.active { display: block; }
+  .comp-loading-msg {
+    padding: 24px; text-align: center; color: #8a7da8; font-size: 0.9em;
+  }
+  .comp-error-msg {
+    padding: 16px; text-align: center; color: #ff8a8a; font-size: 0.88em;
+    background: rgba(200,60,60,0.1); border-radius: 8px;
+  }
+
+  /* ── Ability Section ── */
+  .ability-notice {
+    text-align: center; padding: 28px 20px;
+  }
+  .ability-notice .big-icon { font-size: 2.5em; margin-bottom: 12px; }
+  .ability-notice h3 { color: #c9a0ff; margin-bottom: 8px; }
+  .ability-notice p { color: #8a7da8; font-size: 0.9em; line-height: 1.6; max-width: 480px; margin: 0 auto 14px; }
+  .wcl-btn {
+    display: inline-block; padding: 8px 22px;
+    background: rgba(80,50,130,0.5); border: 1px solid rgba(128,80,200,0.4);
+    color: #c9a0ff; border-radius: 8px; text-decoration: none; font-size: 0.9em;
+    transition: all 0.2s;
+  }
+  .wcl-btn:hover { background: rgba(100,60,180,0.6); border-color: rgba(180,120,255,0.6); }
 
   /* ── Fixes Section ── */
   .fix-section {
@@ -406,21 +455,13 @@
   }
 
   .fix-section h2 {
-    font-size: 1.45em;
-    color: #f0c040;
-    text-align: center;
-    margin-bottom: 22px;
+    font-size: 1.45em; color: #f0c040; text-align: center; margin-bottom: 22px;
   }
 
   .fix-card {
-    background: rgba(0,0,0,0.28);
-    border-radius: 12px;
-    padding: 18px 20px;
-    margin-bottom: 14px;
-    border-left: 4px solid;
-    overflow: hidden;
+    background: rgba(0,0,0,0.28); border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 14px; border-left: 4px solid; overflow: hidden;
   }
-
   .fix-card:last-child { margin-bottom: 0; }
   .fix-card.fix-1 { border-left-color: #ff6b6b; }
   .fix-card.fix-2 { border-left-color: #f0c040; }
@@ -431,41 +472,38 @@
   .fix-1 .fix-number { color: #ff6b6b; }
   .fix-2 .fix-number { color: #f0c040; }
   .fix-3 .fix-number { color: #5fe88a; }
-
-  .fix-title { font-size: 1.1em; color: #e0d8f0; font-weight: 600; }
+  .fix-title { font-size: 1.1em; color: #e0d8f0; font-weight: 600; padding-top: 4px; }
   .fix-desc { color: #a89bc2; font-size: 0.93em; line-height: 1.55; }
-
   .fix-target {
-    margin-top: 10px;
-    padding: 5px 12px;
-    background: rgba(100,60,180,0.25);
-    border-radius: 8px;
-    display: inline-block;
-    font-size: 0.84em;
-    color: #d0b8ff;
-    border: 1px solid rgba(128,80,200,0.2);
+    margin-top: 10px; padding: 5px 12px;
+    background: rgba(100,60,180,0.25); border-radius: 8px; display: inline-block;
+    font-size: 0.84em; color: #d0b8ff; border: 1px solid rgba(128,80,200,0.2);
   }
 
-  /* ── WCL Notice ── */
+  /* ── WCL Notice / Parse Section ── */
   .wcl-notice {
-    background: rgba(80,60,120,0.2);
-    border: 1px solid rgba(128,80,200,0.2);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 0.84em;
-    color: #8a7da8;
-    text-align: center;
-    margin-bottom: 22px;
+    background: rgba(80,60,120,0.2); border: 1px solid rgba(128,80,200,0.2);
+    border-radius: 10px; padding: 12px 16px; font-size: 0.84em; color: #8a7da8;
+    text-align: center; margin-bottom: 22px;
   }
   .wcl-notice a { color: #8a6dba; text-decoration: none; }
   .wcl-notice a:hover { color: #c9a0ff; }
 
+  /* Parse badges inside grade box */
+  .parse-row {
+    display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 14px;
+    padding-top: 14px; border-top: 1px solid rgba(128,80,200,0.2);
+  }
+  .parse-item {
+    text-align: center; padding: 8px 16px;
+    background: rgba(0,0,0,0.2); border-radius: 8px; min-width: 110px;
+  }
+  .parse-item .parse-num { font-size: 1.5em; font-weight: 700; }
+  .parse-item .parse-lbl { font-size: 0.78em; color: #8a7da8; margin-top: 2px; }
+
   /* ── Footer ── */
   .footer {
-    text-align: center;
-    padding: 24px;
-    color: #5a4d78;
-    font-size: 0.84em;
+    text-align: center; padding: 24px; color: #5a4d78; font-size: 0.84em;
   }
   .footer a { color: #8a6dba; text-decoration: none; }
 
@@ -479,19 +517,10 @@
   [data-tip] { position: relative; cursor: help; border-bottom: 1px dotted #8a7da8; }
   [data-tip]:hover::after {
     content: attr(data-tip);
-    position: absolute;
-    bottom: 120%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(20,10,40,0.97);
-    border: 1px solid rgba(128,80,200,0.5);
-    color: #e0d8f0;
-    padding: 7px 12px;
-    border-radius: 8px;
-    font-size: 0.82em;
-    white-space: nowrap;
-    z-index: 100;
-    pointer-events: none;
+    position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+    background: rgba(20,10,40,0.97); border: 1px solid rgba(128,80,200,0.5);
+    color: #e0d8f0; padding: 7px 12px; border-radius: 8px;
+    font-size: 0.82em; white-space: nowrap; z-index: 100; pointer-events: none;
   }
 
   /* ── Responsive ── */
@@ -517,7 +546,8 @@
 <div class="search-section">
   <div class="header">
     <h1>⚔ WoW M+ Analyzer</h1>
-    <div class="subtitle">Enter any character to generate a full Mythic+ performance dashboard</div>
+    <div class="subtitle">Enter any character to get a full Mythic+ performance dashboard</div>
+    <div class="method-note">Compared vs. same spec players at the SAME key level — apples to apples</div>
   </div>
 
   <div class="form-card">
@@ -567,19 +597,22 @@
   <!-- Overall Grade -->
   <div class="grade-box" id="gradeBox"></div>
 
-  <!-- Dungeon Grid -->
+  <!-- WCL Notice (shown when WCL unavailable) -->
+  <div class="wcl-notice" id="wclNotice" style="display:none"></div>
+
+  <!-- Dungeon Breakdown -->
   <div class="section-title">Dungeon Breakdown</div>
   <div class="dungeon-grid" id="dungeonGrid"></div>
 
-  <!-- Chart: Score Comparison -->
+  <!-- Score Chart -->
   <div class="chart-section">
-    <h2>Your Score vs. Estimated Max at Each Key Level</h2>
+    <h2>Your Score vs. Max Possible at Each Key Level</h2>
     <div class="chart-container">
       <canvas id="scoreChart"></canvas>
     </div>
   </div>
 
-  <!-- Chart: Time Comparison -->
+  <!-- Time Chart -->
   <div class="chart-section">
     <h2>Your Clear Time vs. Par Time (Minutes)</h2>
     <div class="chart-container">
@@ -587,36 +620,53 @@
     </div>
   </div>
 
+  <!-- ── Peer Comparison Section ── -->
+  <div class="chart-section" id="compSection">
+    <h2>Same-Key-Level Peer Comparison</h2>
+    <div class="chart-subtitle" id="compSubtitle">Top 5 players of the same spec who ran the same key level</div>
+
+    <div class="dungeon-tabs" id="compTabs"></div>
+    <div id="compPanels">
+      <div class="comp-loading-msg" id="compInitLoad">
+        <div class="spinner-sm"></div> Loading comparison data…
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Ability Breakdown Section ── -->
+  <div class="chart-section" id="abilitySection">
+    <h2>Ability Damage Breakdown</h2>
+    <div id="abilityContent"></div>
+  </div>
+
   <!-- Top 3 Fixes -->
   <div class="fix-section" id="fixSection"></div>
 
-  <!-- WCL Notice -->
-  <div class="wcl-notice" id="wclNotice"></div>
-
   <!-- Footer -->
   <div class="footer">
-    Data sourced from <a href="https://raider.io" target="_blank">Raider.IO</a> public API &nbsp;·&nbsp;
-    WoW M+ Analyzer &nbsp;·&nbsp; Not affiliated with Blizzard Entertainment
+    Data from <a href="https://raider.io" target="_blank">Raider.IO</a> public API &nbsp;·&nbsp;
+    Parse data from <a href="https://www.warcraftlogs.com" target="_blank">Warcraft Logs</a> (when available)
+    &nbsp;·&nbsp; Not affiliated with Blizzard Entertainment
   </div>
 
 </div>
 
 <script>
-// ── Chart instances (destroy before recreating) ──
-let scoreChartInstance = null;
-let timeChartInstance = null;
+// ── Globals ──
+let scoreChartInst = null;
+let timeChartInst  = null;
+let abilityChartInst = null;
+let _globalData = null; // hold analyze response for comparison calls
 
-// ── Enter key support ──
-document.addEventListener('keydown', (e) => {
+// ── Enter key ──
+document.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
-    const active = document.activeElement;
-    if (active && ['charName', 'server', 'region'].includes(active.id)) {
-      runAnalysis();
-    }
+    const id = document.activeElement?.id;
+    if (['charName','server','region'].includes(id)) runAnalysis();
   }
 });
 
-// ── Grade letter → CSS class prefix ──
+// ── Helpers ──
 function gradeClass(letter) {
   if (!letter) return 'C';
   const l = letter[0];
@@ -627,13 +677,11 @@ function gradeClass(letter) {
   return 'F';
 }
 
-// ── Format number with commas ──
 function fmtNum(n) {
   if (n == null) return '—';
   return Number(n).toLocaleString();
 }
 
-// ── Role icon ──
 function roleIcon(role) {
   if (!role) return '⚔';
   const r = role.toLowerCase();
@@ -642,7 +690,6 @@ function roleIcon(role) {
   return '⚔';
 }
 
-// ── Class color ──
 const CLASS_COLORS = {
   'Death Knight': '#C41E3A', 'Demon Hunter': '#A330C9', 'Druid': '#FF7C0A',
   'Evoker': '#33937F', 'Hunter': '#AAD372', 'Mage': '#3FC7EB',
@@ -651,9 +698,46 @@ const CLASS_COLORS = {
   'Warrior': '#C69B3A'
 };
 
-// ── Main analyze function ──
+function parseColor(pct) {
+  if (pct >= 75) return '#5fe88a';
+  if (pct >= 60) return '#f0d050';
+  if (pct >= 40) return '#ff8a5c';
+  return '#ff6b6b';
+}
+
+function timeDiffStr(playerMs, refMs) {
+  if (!playerMs || !refMs) return null;
+  const diffMs = playerMs - refMs;
+  const diffMin = Math.abs(Math.round(diffMs / 60000));
+  const diffSec = Math.abs(Math.round((Math.abs(diffMs) % 60000) / 1000));
+  const diffStr = `${diffMin}:${String(diffSec).padStart(2,'0')}`;
+  return diffMs > 0 ? `+${diffStr} slower` : `-${diffStr} faster`;
+}
+
+function slugifyName(name) {
+  return (name || '').toLowerCase()
+    .replace(/['''`]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function setLoading(on) {
+  document.getElementById('loadingBox').style.display = on ? 'block' : 'none';
+  document.getElementById('analyzeBtn').disabled = on;
+}
+function setLoadingText(t) { document.getElementById('loadingText').textContent = t; }
+function showError(msg) {
+  document.getElementById('errorMsg').textContent = msg;
+  document.getElementById('errorBox').style.display = 'block';
+}
+function hideError() { document.getElementById('errorBox').style.display = 'none'; }
+function hideResults() { document.getElementById('results').style.display = 'none'; }
+
+// ── Main entry ──
 async function runAnalysis() {
-  const name = document.getElementById('charName').value.trim();
+  const name   = document.getElementById('charName').value.trim();
   const server = document.getElementById('server').value.trim();
   const region = document.getElementById('region').value;
 
@@ -667,7 +751,7 @@ async function runAnalysis() {
   hideResults();
 
   try {
-    setLoadingText('Fetching character data from Raider.IO…');
+    setLoadingText('Fetching Raider.IO data…');
 
     const res = await fetch('/api/analyze', {
       method: 'POST',
@@ -676,13 +760,11 @@ async function runAnalysis() {
     });
 
     const json = await res.json();
-
-    if (!json.success) {
-      throw new Error(json.error || 'Unknown server error.');
-    }
+    if (!json.success) throw new Error(json.error || 'Unknown server error.');
 
     setLoadingText('Rendering dashboard…');
-    await sleep(300);
+    await sleep(200);
+    _globalData = json.data;
     renderResults(json.data);
 
   } catch (err) {
@@ -692,81 +774,97 @@ async function runAnalysis() {
   }
 }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-function setLoading(on) {
-  document.getElementById('loadingBox').style.display = on ? 'block' : 'none';
-  document.getElementById('analyzeBtn').disabled = on;
-}
-function setLoadingText(t) { document.getElementById('loadingText').textContent = t; }
-function showError(msg) {
-  document.getElementById('errorMsg').textContent = msg;
-  document.getElementById('errorBox').style.display = 'block';
-}
-function hideError() { document.getElementById('errorBox').style.display = 'none'; }
-function hideResults() { document.getElementById('results').style.display = 'none'; }
-
-// ── Render ──
+// ── Render all sections ──
 function renderResults(data) {
-  const { character, grade, dungeons, fixes, wclData } = data;
+  const { character, grade, dungeons, fixes, wclData, season } = data;
 
   renderCharBanner(character, grade);
-  renderGradeBox(grade);
-  renderDungeons(dungeons, grade.metrics.overallScore);
+  renderGradeBox(grade, wclData);
+  renderDungeons(dungeons, wclData);
   renderCharts(dungeons);
   renderFixes(fixes);
+  renderAbilitySection(character, wclData, dungeons);
   renderWCLNotice(character, wclData);
 
   document.getElementById('results').style.display = 'block';
-  window.scrollTo({ top: document.querySelector('.search-section').offsetTop + document.querySelector('.search-section').offsetHeight + 20, behavior: 'smooth' });
+  window.scrollTo({
+    top: document.querySelector('.search-section').offsetTop
+        + document.querySelector('.search-section').offsetHeight + 16,
+    behavior: 'smooth'
+  });
+
+  // Kick off async comparison loading
+  loadAllComparisons(character, dungeons, season);
 }
 
+// ── Character Banner ──
 function renderCharBanner(char, grade) {
   const classColor = CLASS_COLORS[char.class] || '#c9a0ff';
-  const ilvlStr = char.ilvl ? `<span>${char.ilvl}</span> ilvl` : '';
-  const rankStr = grade.metrics.rankRegion
-    ? `<span>#${fmtNum(grade.metrics.rankRegion)}</span> ${(char.region || 'US')} M+`
-    : '';
-  const rankRealmStr = grade.metrics.rankRealm
-    ? `<span>#${fmtNum(grade.metrics.rankRealm)}</span> ${char.realm} M+`
-    : '';
 
   const metaItems = [
-    ilvlStr ? `<div class="char-meta-item"><div class="meta-val" style="color:#c9a0ff">${char.ilvl}</div><div class="meta-lbl">Item Level</div></div>` : '',
-    rankStr ? `<div class="char-meta-item"><div class="meta-val" style="color:#f0d050">#${fmtNum(grade.metrics.rankRegion)}</div><div class="meta-lbl">${char.region} Rank</div></div>` : '',
-    rankRealmStr ? `<div class="char-meta-item"><div class="meta-val" style="color:#5fe88a">#${fmtNum(grade.metrics.rankRealm)}</div><div class="meta-lbl">Realm Rank</div></div>` : ''
+    char.ilvl ? `<div class="char-meta-item"><div class="meta-val" style="color:#c9a0ff">${char.ilvl}</div><div class="meta-lbl">Item Level</div></div>` : '',
+    grade.metrics.rankRegion ? `<div class="char-meta-item"><div class="meta-val" style="color:#f0d050">#${fmtNum(grade.metrics.rankRegion)}</div><div class="meta-lbl">${char.region} Rank</div></div>` : '',
+    grade.metrics.rankRealm  ? `<div class="char-meta-item"><div class="meta-val" style="color:#5fe88a">#${fmtNum(grade.metrics.rankRealm)}</div><div class="meta-lbl">Realm Rank</div></div>`  : ''
   ].filter(Boolean).join('');
 
-  const avatarHtml = char.thumbnail
+  const avatar = char.thumbnail
     ? `<img class="char-avatar" src="${char.thumbnail}" alt="${char.name}" onerror="this.replaceWith(makePlaceholder())">`
     : `<div class="char-avatar-placeholder">${roleIcon(char.role)}</div>`;
 
   document.getElementById('charBanner').innerHTML = `
-    ${avatarHtml}
+    ${avatar}
     <div class="char-info">
       <div class="char-name" style="color:${classColor}">${char.name}</div>
       <div class="char-details">
-        <span>${char.spec || ''}</span> ${char.class || ''} &nbsp;·&nbsp; ${char.realm}-${char.region}
+        <span>${char.spec || ''}</span> ${char.class || ''} &nbsp;·&nbsp;
+        ${char.realm}-${char.region}
       </div>
     </div>
     ${metaItems ? `<div class="char-meta">${metaItems}</div>` : ''}
-    ${char.rioUrl ? `<a class="rio-link" href="${char.rioUrl}" target="_blank">View on Raider.IO →</a>` : ''}
+    ${char.rioUrl ? `<a class="rio-link" href="${char.rioUrl}" target="_blank">Raider.IO →</a>` : ''}
   `;
 }
 
 function makePlaceholder() {
-  const div = document.createElement('div');
-  div.className = 'char-avatar-placeholder';
-  div.textContent = '⚔';
-  return div;
+  const d = document.createElement('div');
+  d.className = 'char-avatar-placeholder';
+  d.textContent = '⚔';
+  return d;
 }
 
-function renderGradeBox(grade) {
-  const m = grade.metrics;
+// ── Grade Box ──
+function renderGradeBox(grade, wclData) {
+  const m  = grade.metrics;
   const gc = gradeClass(grade.letter);
 
-  const dpsNum = m.dpsScore ? `<div class="score-item"><div class="num" style="color:#5fe88a">${fmtNum(Math.round(m.dpsScore))}</div><div class="label" data-tip="Your DPS spec M+ score">DPS Score</div></div>` : '';
-  const healNum = m.healScore ? `<div class="score-item"><div class="num" style="color:#60c0ff">${fmtNum(Math.round(m.healScore))}</div><div class="label" data-tip="Your Healer M+ score">Healer Score</div></div>` : '';
-  const tankNum = m.tankScore ? `<div class="score-item"><div class="num" style="color:#ff8a5c">${fmtNum(Math.round(m.tankScore))}</div><div class="label" data-tip="Your Tank M+ score">Tank Score</div></div>` : '';
+  const extraScores = [
+    m.dpsScore  ? `<div class="score-item"><div class="num" style="color:#5fe88a">${fmtNum(Math.round(m.dpsScore))}</div><div class="label" data-tip="DPS spec M+ score">DPS Score</div></div>` : '',
+    m.healScore ? `<div class="score-item"><div class="num" style="color:#60c0ff">${fmtNum(Math.round(m.healScore))}</div><div class="label" data-tip="Healer M+ score">Healer Score</div></div>` : '',
+    m.tankScore ? `<div class="score-item"><div class="num" style="color:#ff8a5c">${fmtNum(Math.round(m.tankScore))}</div><div class="label" data-tip="Tank M+ score">Tank Score</div></div>`   : ''
+  ].filter(Boolean).join('');
+
+  // WCL parse row (shown only if WCL data available)
+  let parseRow = '';
+  if (wclData?.bestParse != null) {
+    const bColor = parseColor(wclData.bestParse);
+    const mColor = parseColor(wclData.medianParse ?? wclData.bestParse);
+    parseRow = `
+      <div class="parse-row">
+        <div class="parse-item">
+          <div class="parse-num" style="color:${bColor}">${Math.round(wclData.bestParse)}</div>
+          <div class="parse-lbl" data-tip="Your best DPS percentile on Warcraft Logs — 100 = better than everyone">Best Parse %</div>
+        </div>
+        ${wclData.medianParse != null ? `
+        <div class="parse-item">
+          <div class="parse-num" style="color:${mColor}">${Math.round(wclData.medianParse)}</div>
+          <div class="parse-lbl" data-tip="Your median (typical) DPS percentile — what you usually play like">Median Parse %</div>
+        </div>` : ''}
+        <div class="parse-item">
+          <div class="parse-num" style="color:#a89bc2;font-size:0.9em">WCL</div>
+          <div class="parse-lbl">Data Source</div>
+        </div>
+      </div>`;
+  }
 
   document.getElementById('gradeBox').innerHTML = `
     <div class="grade-label">OVERALL GRADE</div>
@@ -775,222 +873,234 @@ function renderGradeBox(grade) {
     <div class="score-row">
       <div class="score-item">
         <div class="num" style="color:#c9a0ff">${fmtNum(Math.round(grade.score))}</div>
-        <div class="label" data-tip="Your total M+ score across all dungeons (Raider.IO)">M+ Score</div>
+        <div class="label" data-tip="Your total Mythic+ score across all dungeons (Raider.IO)">M+ Score</div>
       </div>
       <div class="score-item">
         <div class="num" style="color:${m.timingRatePct >= 80 ? '#5fe88a' : m.timingRatePct >= 50 ? '#f0d050' : '#ff6b6b'}">${m.timingRatePct}%</div>
-        <div class="label" data-tip="Percentage of your best dungeon runs that were timed (1+ upgrade)">Timing Rate</div>
+        <div class="label" data-tip="% of your best runs that were timed (1+ keystone upgrade)">Timing Rate</div>
       </div>
       <div class="score-item">
         <div class="num" style="color:#a89bc2">${m.avgKeyLevel > 0 ? m.avgKeyLevel.toFixed(1) : '—'}</div>
-        <div class="label" data-tip="Average key level across all your best dungeon runs">Avg Key Level</div>
+        <div class="label" data-tip="Average key level across your best dungeon runs">Avg Key Level</div>
       </div>
       <div class="score-item">
         <div class="num" style="color:#f0d050">${m.scoreEfficiency > 0 ? m.scoreEfficiency.toFixed(1) + '%' : '—'}</div>
-        <div class="label" data-tip="How close your dungeon scores are to the estimated max at your current key levels">Score Efficiency</div>
+        <div class="label" data-tip="How close your scores are to the estimated max at your current key levels">Score Efficiency</div>
       </div>
-      ${dpsNum}${healNum}${tankNum}
+      ${extraScores}
     </div>
+    ${parseRow}
   `;
 }
 
-function renderDungeons(dungeons, maxOverallScore) {
+// ── Dungeon Cards ──
+function renderDungeons(dungeons, wclData) {
   if (!dungeons || dungeons.length === 0) {
-    document.getElementById('dungeonGrid').innerHTML = '<div style="color:#8a7da8;padding:20px;text-align:center">No Mythic+ runs found for this character.</div>';
+    document.getElementById('dungeonGrid').innerHTML =
+      '<div style="color:#8a7da8;padding:20px;text-align:center">No Mythic+ runs found for this character.</div>';
     return;
   }
 
-  const maxScore = Math.max(...dungeons.map(d => d.score), 1);
+  // Build WCL dungeon lookup (fuzzy match by encounter name)
+  const wclMap = {};
+  if (wclData?.dungeonRankings) {
+    for (const r of wclData.dungeonRankings) {
+      const key = (r.encounter || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      wclMap[key] = r;
+    }
+  }
+
+  function findWCLData(dungeonName) {
+    const key = dungeonName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Exact match first
+    if (wclMap[key]) return wclMap[key];
+    // Substring match
+    for (const [k, v] of Object.entries(wclMap)) {
+      if (key.includes(k.slice(0, 8)) || k.includes(key.slice(0, 8))) return v;
+    }
+    return null;
+  }
 
   document.getElementById('dungeonGrid').innerHTML = dungeons.map(d => {
-    const fillClass = d.status === 'green' ? 'fill-green' : d.status === 'yellow' ? 'fill-yellow' : 'fill-red';
-    const barPct = Math.min(100, (d.score / maxScore) * 100).toFixed(1);
-    const timeColor = d.status === 'green' ? '#5fe88a' : d.status === 'yellow' ? '#f0d050' : '#ff6b6b';
-    const timeSavedColor = d.timeSavedMs >= 0 ? '#5fe88a' : '#ff6b6b';
-    const upgradeStars = d.upgrades >= 3 ? '⭐⭐⭐' : d.upgrades === 2 ? '⭐⭐' : d.upgrades === 1 ? '⭐' : '✗';
-    const upgradeLabel = d.upgrades >= 3 ? '+3 (Perfect)' : d.upgrades === 2 ? '+2' : d.upgrades === 1 ? '+1' : 'Depleted';
+    const maxScore   = d.estimatedMaxScore;
+    const scorePct   = Math.min(100, (d.score / maxScore) * 100).toFixed(1);
+    const fillClass  = d.status === 'green' ? 'fill-green' : d.status === 'yellow' ? 'fill-yellow' : 'fill-red';
     const badgeClass = `badge-${d.status}`;
-    const cardClass = `card-${d.status}`;
-
+    const cardClass  = `card-${d.status}`;
+    const timeColor  = d.status === 'green' ? '#5fe88a' : d.status === 'yellow' ? '#f0d050' : '#ff6b6b';
+    const timeSavedColor = d.timeSavedMs >= 0 ? '#5fe88a' : '#ff6b6b';
+    const upgradeLabel = d.upgrades >= 3 ? '+3 Perfect' : d.upgrades === 2 ? '+2' : d.upgrades === 1 ? '+1' : 'Depleted';
     const affixChips = d.affixes.map(a => `<span class="affix-chip">${a}</span>`).join('');
-    const dungeonUrl = d.url ? `<a href="${d.url}" target="_blank" style="color:#8a6dba;font-size:0.8em;text-decoration:none">View Log →</a>` : '';
+    const pctNote    = parseFloat(scorePct) >= 97 ? 'maxed out!' : parseFloat(scorePct) >= 93 ? 'close to max' : 'room to grow';
+    const wcl        = findWCLData(d.name);
+
+    const wclRow = wcl?.rankPercent != null ? `
+      <div class="stat-row">
+        <span class="stat-label" data-tip="Your best DPS percentile in this dungeon from Warcraft Logs">Best Parse</span>
+        <span class="stat-value" style="color:${parseColor(wcl.rankPercent)}">${Math.round(wcl.rankPercent)}%</span>
+        ${wcl.medianPercent != null ? `<span class="stat-comparison">median ${Math.round(wcl.medianPercent)}%</span>` : ''}
+      </div>
+      ${wcl.bestAmount ? `<div class="stat-row">
+        <span class="stat-label" data-tip="Your best DPS recorded in Warcraft Logs for this dungeon">Best DPS</span>
+        <span class="stat-value">${(wcl.bestAmount/1000).toFixed(1)}k</span>
+      </div>` : ''}` : '';
+
+    const dungeonUrl = d.url
+      ? `<div style="margin-top:10px;text-align:right"><a href="${d.url}" target="_blank" style="color:#8a6dba;font-size:0.8em;text-decoration:none">View on RIO →</a></div>`
+      : '';
 
     return `
-      <div class="dungeon-card ${cardClass}">
+      <div class="dungeon-card ${cardClass}" id="card-${d.slug}">
         <h3>
           ${d.name}
           <span class="key-badge">+${d.keyLevel}</span>
           <span class="status-badge ${badgeClass}">${upgradeLabel}</span>
         </h3>
         ${affixChips ? `<div class="affix-row">${affixChips}</div>` : ''}
+
+        ${wclRow}
+
         <div class="stat-row">
-          <span class="stat-label">Score</span>
+          <span class="stat-label" data-tip="Raider.IO score for this dungeon run">Score</span>
           <span class="stat-value" style="color:#c9a0ff">${d.score.toFixed(1)}</span>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Clear Time</span>
+          <span class="stat-label" data-tip="Your actual clear time">Your Time</span>
           <span class="stat-value" style="color:${timeColor}">${d.clearTimeFormatted}</span>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Par Time</span>
+          <span class="stat-label" data-tip="The time limit to earn a keystone upgrade">Par Time</span>
           <span class="stat-value" style="color:#8a7da8">${d.parTimeFormatted}</span>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Time vs Timer</span>
+          <span class="stat-label" data-tip="How much time you saved or went over the limit">vs Timer</span>
           <span class="stat-value" style="color:${timeSavedColor}">${d.timeSavedFormatted}</span>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Time Used</span>
+          <span class="stat-label" data-tip="% of the time limit you used — lower is better">Timer Used</span>
           <span class="stat-value" style="color:${timeColor}">${d.timePercent}%</span>
         </div>
+
+        <!-- Comparison data injected async -->
+        <div class="comp-inline" id="cinline-${d.slug}">
+          <div class="comp-load-text"><span class="spinner-sm"></span> Loading peer comparison…</div>
+        </div>
+
         <div class="score-bar-container">
           <div class="score-bar-label">
-            <span>Score vs Your Best Dungeon</span>
-            <span>${barPct}%</span>
+            <span data-tip="Your score vs estimated max at this key level">Score vs Key Level Max</span>
+            <span>${scorePct}%</span>
           </div>
           <div class="score-bar-track">
-            <div class="score-bar-fill ${fillClass}" style="width:${barPct}%"></div>
+            <div class="score-bar-fill ${fillClass}" style="width:${scorePct}%"></div>
+          </div>
+          <div style="font-size:0.74em;color:#8a7da8;margin-top:4px;text-align:center">
+            ${d.score.toFixed(1)} / ${maxScore} pts — ${pctNote}
           </div>
         </div>
-        ${dungeonUrl ? `<div style="margin-top:10px;text-align:right">${dungeonUrl}</div>` : ''}
+        ${dungeonUrl}
       </div>
     `;
   }).join('');
 }
 
+// ── Charts ──
 function renderCharts(dungeons) {
   if (!dungeons || dungeons.length === 0) return;
 
-  // Chart.js global defaults for dark theme
   Chart.defaults.color = '#8a7da8';
   Chart.defaults.borderColor = 'rgba(128,80,200,0.15)';
-  Chart.defaults.font.family = "'Segoe UI', Tahoma, sans-serif";
 
   const labels = dungeons.map(d => d.shortName || d.name.split(' ').map(w => w[0]).join(''));
+  const grid   = 'rgba(128,80,200,0.12)';
+  const tick   = '#a89bc2';
+  const ttBase = {
+    backgroundColor: 'rgba(20,10,40,0.95)',
+    borderColor: 'rgba(128,80,200,0.4)',
+    borderWidth: 1,
+    titleColor: '#c9a0ff',
+    bodyColor: '#e0d8f0'
+  };
 
-  // ── Score Chart ──
-  if (scoreChartInstance) { scoreChartInstance.destroy(); scoreChartInstance = null; }
-  const ctx1 = document.getElementById('scoreChart').getContext('2d');
-  scoreChartInstance = new Chart(ctx1, {
+  // Score Chart
+  if (scoreChartInst) { scoreChartInst.destroy(); scoreChartInst = null; }
+  scoreChartInst = new Chart(document.getElementById('scoreChart').getContext('2d'), {
     type: 'bar',
     data: {
       labels,
       datasets: [
-        {
-          label: 'Your Score',
-          data: dungeons.map(d => parseFloat(d.score.toFixed(1))),
-          backgroundColor: 'rgba(150,80,220,0.65)',
-          borderColor: 'rgba(180,110,255,1)',
-          borderWidth: 1,
-          borderRadius: 6
-        },
-        {
-          label: 'Est. Max at This Key Level',
+        { label: 'Your Score',
+          data: dungeons.map(d => d.score),
+          backgroundColor: 'rgba(150,80,220,0.65)', borderColor: 'rgba(180,110,255,1)',
+          borderWidth: 1, borderRadius: 6 },
+        { label: 'Est. Max at Key Level',
           data: dungeons.map(d => d.estimatedMaxScore),
-          backgroundColor: 'rgba(80,150,220,0.35)',
-          borderColor: 'rgba(80,180,255,0.8)',
-          borderWidth: 1,
-          borderRadius: 6
-        }
+          backgroundColor: 'rgba(80,150,220,0.3)', borderColor: 'rgba(80,180,255,0.8)',
+          borderWidth: 1, borderRadius: 6 }
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { labels: { color: '#a89bc2', padding: 16, font: { size: 12 } } },
-        tooltip: {
-          backgroundColor: 'rgba(20,10,40,0.95)',
-          borderColor: 'rgba(128,80,200,0.4)',
-          borderWidth: 1,
-          titleColor: '#c9a0ff',
-          bodyColor: '#e0d8f0',
-          callbacks: {
-            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} pts`
+        legend: { labels: { color: tick, padding: 16 } },
+        tooltip: { ...ttBase, callbacks: {
+          label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} pts`,
+          afterLabel: ctx => {
+            if (ctx.datasetIndex === 0) {
+              const d = dungeons[ctx.dataIndex];
+              return `Gap to max: -${(d.estimatedMaxScore - d.score).toFixed(1)} pts`;
+            }
           }
-        }
+        }}
       },
       scales: {
-        x: { ticks: { color: '#a89bc2' }, grid: { color: 'rgba(128,80,200,0.1)' } },
-        y: {
-          ticks: { color: '#a89bc2' },
-          grid: { color: 'rgba(128,80,200,0.1)' },
-          title: { display: true, text: 'Score', color: '#8a7da8' }
-        }
+        x: { ticks: { color: tick }, grid: { color: grid } },
+        y: { ticks: { color: tick }, grid: { color: grid },
+             title: { display: true, text: 'Score', color: '#8a7da8' } }
       }
     }
   });
 
-  // ── Time Chart ──
-  if (timeChartInstance) { timeChartInstance.destroy(); timeChartInstance = null; }
-  const ctx2 = document.getElementById('timeChart').getContext('2d');
+  // Time Chart
+  if (timeChartInst) { timeChartInst.destroy(); timeChartInst = null; }
   const barColors = dungeons.map(d =>
     d.status === 'green' ? 'rgba(95,232,138,0.65)' :
     d.status === 'yellow' ? 'rgba(240,208,80,0.65)' :
     'rgba(255,107,107,0.65)'
   );
-  timeChartInstance = new Chart(ctx2, {
+  timeChartInst = new Chart(document.getElementById('timeChart').getContext('2d'), {
     type: 'bar',
     data: {
       labels,
       datasets: [
-        {
-          label: 'Your Clear Time',
-          data: dungeons.map(d => parseFloat((d.clearTimeMs / 60000).toFixed(2))),
-          backgroundColor: barColors,
-          borderColor: barColors.map(c => c.replace('0.65', '1')),
-          borderWidth: 1,
-          borderRadius: 6,
-          order: 2
-        },
-        {
-          label: 'Par Time (Limit)',
-          type: 'line',
-          data: dungeons.map(d => parseFloat((d.parTimeMs / 60000).toFixed(2))),
-          borderColor: 'rgba(220,80,80,0.85)',
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          borderDash: [6, 3],
-          pointRadius: 5,
-          pointBackgroundColor: 'rgba(220,80,80,0.85)',
-          tension: 0.1,
-          order: 1
-        }
+        { label: 'Your Clear Time',
+          data: dungeons.map(d => +(d.clearTimeMs / 60000).toFixed(2)),
+          backgroundColor: barColors, borderColor: barColors.map(c => c.replace('0.65','1')),
+          borderWidth: 1, borderRadius: 6, order: 2 },
+        { label: 'Par Time (Limit)', type: 'line',
+          data: dungeons.map(d => +(d.parTimeMs / 60000).toFixed(2)),
+          borderColor: 'rgba(220,80,80,0.85)', backgroundColor: 'transparent',
+          borderWidth: 2, borderDash: [6,3], pointRadius: 5,
+          pointBackgroundColor: 'rgba(220,80,80,0.85)', tension: 0.1, order: 1 }
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { labels: { color: '#a89bc2', padding: 16, font: { size: 12 } } },
-        tooltip: {
-          backgroundColor: 'rgba(20,10,40,0.95)',
-          borderColor: 'rgba(128,80,200,0.4)',
-          borderWidth: 1,
-          titleColor: '#c9a0ff',
-          bodyColor: '#e0d8f0',
-          callbacks: {
-            label: ctx => {
-              const val = ctx.parsed.y;
-              const mins = Math.floor(val);
-              const secs = Math.round((val - mins) * 60);
-              return `${ctx.dataset.label}: ${mins}:${secs.toString().padStart(2, '0')}`;
-            }
+        legend: { labels: { color: tick, padding: 16 } },
+        tooltip: { ...ttBase, callbacks: {
+          label: ctx => {
+            const v = ctx.parsed.y;
+            const m = Math.floor(v), s = Math.round((v - m) * 60);
+            return `${ctx.dataset.label}: ${m}:${String(s).padStart(2,'0')}`;
           }
-        }
+        }}
       },
       scales: {
-        x: { ticks: { color: '#a89bc2' }, grid: { color: 'rgba(128,80,200,0.1)' } },
+        x: { ticks: { color: tick }, grid: { color: grid } },
         y: {
-          ticks: {
-            color: '#a89bc2',
-            callback: val => {
-              const m = Math.floor(val);
-              const s = Math.round((val - m) * 60);
-              return `${m}:${s.toString().padStart(2,'0')}`;
-            }
-          },
-          grid: { color: 'rgba(128,80,200,0.1)' },
+          ticks: { color: tick, callback: v => { const m=Math.floor(v),s=Math.round((v-m)*60); return `${m}:${String(s).padStart(2,'0')}`; } },
+          grid: { color: grid },
           title: { display: true, text: 'Minutes', color: '#8a7da8' }
         }
       }
@@ -998,6 +1108,71 @@ function renderCharts(dungeons) {
   });
 }
 
+// ── Ability Section ──
+function renderAbilitySection(character, wclData, dungeons) {
+  const sec     = document.getElementById('abilitySection');
+  const content = document.getElementById('abilityContent');
+
+  if (wclData?.dungeonRankings?.length > 0) {
+    // Build ability DPS chart from WCL dungeon data
+    const topDungeon = wclData.dungeonRankings
+      .filter(r => r.bestAmount)
+      .sort((a,b) => (b.bestAmount||0) - (a.bestAmount||0))[0];
+
+    if (topDungeon) {
+      const wclUrl = wclData.wclUrl || '#';
+      content.innerHTML = `
+        <div class="chart-subtitle">
+          Best performance: <span style="color:#c9a0ff">${topDungeon.encounter}</span> —
+          <span style="color:#5fe88a">${(topDungeon.bestAmount/1000).toFixed(1)}k DPS</span>
+          (${Math.round(topDungeon.rankPercent || 0)}th percentile)
+        </div>
+        <div style="margin:16px 0;padding:16px;background:rgba(0,0,0,0.2);border-radius:10px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+            ${wclData.dungeonRankings.filter(r => r.rankPercent != null).map(r => `
+              <div style="text-align:center;padding:10px;background:rgba(100,60,180,0.15);border-radius:8px;border:1px solid rgba(128,80,200,0.15)">
+                <div style="color:#8a7da8;font-size:0.78em;margin-bottom:4px">${r.encounter}</div>
+                <div style="font-size:1.3em;font-weight:700;color:${parseColor(r.rankPercent)}">${Math.round(r.rankPercent)}%</div>
+                <div style="font-size:0.72em;color:#6a5d88">parse</div>
+                ${r.bestAmount ? `<div style="font-size:0.85em;color:#a89bc2;margin-top:2px">${(r.bestAmount/1000).toFixed(1)}k DPS</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:10px">
+          <div style="font-size:0.8em;color:#6a5d88;margin-bottom:8px">For full ability-by-ability breakdown with casts per minute:</div>
+          <a class="wcl-btn" href="${wclUrl}" target="_blank">View Full Report on Warcraft Logs →</a>
+        </div>
+      `;
+      sec.style.display = 'block';
+      return;
+    }
+  }
+
+  // Fallback: no WCL data — show placeholder
+  const wclUrl = character
+    ? `https://www.warcraftlogs.com/character/${(character.region||'us').toLowerCase()}/${(character.realm||'').toLowerCase().replace(/\s+/g,'-')}/${(character.name||'').toLowerCase()}`
+    : 'https://www.warcraftlogs.com';
+
+  content.innerHTML = `
+    <div class="ability-notice">
+      <div class="big-icon">📊</div>
+      <h3>Ability Breakdown Not Available</h3>
+      <p>
+        Damage breakdown by ability (top 10 abilities, casts per minute, damage per cast)
+        requires Warcraft Logs data. WCL scraping didn't return ability data for this character.
+      </p>
+      <p style="font-size:0.82em">
+        Log your runs to Warcraft Logs and this section will show ability comparisons —
+        which spells you're underusing, missing talents, and CPM vs top players.
+      </p>
+      <a class="wcl-btn" href="${wclUrl}" target="_blank">View on Warcraft Logs →</a>
+    </div>
+  `;
+  sec.style.display = 'block';
+}
+
+// ── Fixes ──
 function renderFixes(fixes) {
   if (!fixes || fixes.length === 0) return;
 
@@ -1018,13 +1193,203 @@ function renderFixes(fixes) {
   `;
 }
 
+// ── WCL Notice ──
 function renderWCLNotice(char, wclData) {
-  const wclUrl = `https://www.warcraftlogs.com/character/${(char.region || 'us').toLowerCase()}/${(char.realm || '').toLowerCase().replace(/\s+/g, '-')}/${(char.name || '').toLowerCase()}`;
-  const msg = wclData
-    ? `Warcraft Logs parse data found. For full raid performance details, <a href="${wclUrl}" target="_blank">view on WCL</a>.`
-    : `DPS parse percentiles require Warcraft Logs. <a href="${wclUrl}" target="_blank">View this character on WCL</a> for raid performance data.`;
+  const notice = document.getElementById('wclNotice');
+  if (wclData?.bestParse != null) {
+    // WCL worked — no notice needed
+    notice.style.display = 'none';
+    return;
+  }
+  const realmSlug = (char.realm || '').toLowerCase().replace(/\s+/g, '-');
+  const wclUrl = `https://www.warcraftlogs.com/character/${(char.region||'us').toLowerCase()}/${realmSlug}/${(char.name||'').toLowerCase()}`;
+  notice.innerHTML = `DPS parse percentiles require Warcraft Logs. <a href="${wclUrl}" target="_blank">View ${char.name} on WCL</a> to see parse data.`;
+  notice.style.display = 'block';
+}
 
-  document.getElementById('wclNotice').innerHTML = msg;
+// ── Peer Comparison (async) ──
+async function loadAllComparisons(character, dungeons, season) {
+  if (!dungeons || dungeons.length === 0) {
+    document.getElementById('compSection').style.display = 'none';
+    return;
+  }
+
+  const tabsEl   = document.getElementById('compTabs');
+  const panelsEl = document.getElementById('compPanels');
+  document.getElementById('compInitLoad').style.display = 'none';
+
+  // Build tab buttons and empty panels
+  tabsEl.innerHTML = dungeons.map((d, i) => `
+    <button class="dungeon-tab loading-tab" id="tab-${d.slug}" onclick="switchCompTab('${d.slug}')">
+      +${d.keyLevel} ${d.shortName}
+    </button>
+  `).join('');
+
+  panelsEl.innerHTML = dungeons.map(d => `
+    <div class="comp-panel" id="panel-${d.slug}">
+      <div class="comp-loading-msg">
+        <div class="spinner-sm"></div> Loading +${d.keyLevel} ${d.name}…
+      </div>
+    </div>
+  `).join('');
+
+  // Show first tab active immediately (loading state)
+  showCompTab(dungeons[0].slug);
+
+  // Fire all comparison requests in parallel
+  const promises = dungeons.map(d =>
+    loadSingleComparison(character, d, season)
+  );
+
+  await Promise.allSettled(promises);
+}
+
+async function loadSingleComparison(character, dungeon, season) {
+  const slug  = dungeon.slug;
+  const panel = document.getElementById(`panel-${slug}`);
+  const tab   = document.getElementById(`tab-${slug}`);
+
+  try {
+    const res = await fetch('/api/compare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        dungeonSlug: slug,
+        dungeonName: dungeon.name,
+        keyLevel: dungeon.keyLevel,
+        className: character.class,
+        specName: character.spec,
+        region: character.region,
+        playerIlvl: character.ilvl,
+        season: season || 'season-tww-2'
+      })
+    });
+
+    const json = await res.json();
+    const players = json.data?.players || [];
+
+    if (tab) tab.classList.remove('loading-tab');
+
+    if (players.length === 0) {
+      if (panel) panel.innerHTML = `
+        <div class="comp-error-msg">
+          No comparison data found for +${dungeon.keyLevel} ${dungeon.name}.<br>
+          <span style="font-size:0.85em;color:#6a5d88">Raider.IO may not have rankings data for this dungeon/spec at this key level.</span>
+        </div>`;
+
+      // Update inline card
+      const cinline = document.getElementById(`cinline-${slug}`);
+      if (cinline) cinline.innerHTML = `<span style="color:#6a5d88;font-size:0.82em">No peer data available at +${dungeon.keyLevel}</span>`;
+      return;
+    }
+
+    // Build comparison table
+    const avgClearMs = players.reduce((s,p) => s + (p.clearTimeMs||0), 0) / players.filter(p=>p.clearTimeMs).length;
+    const timeDiff   = dungeon.clearTimeMs && avgClearMs ? timeDiffStr(dungeon.clearTimeMs, avgClearMs) : null;
+    const avgTime    = avgClearMs ? formatMsToStr(avgClearMs) : null;
+
+    const hasIlvl = players.some(p => p.ilvl != null);
+
+    const tableHtml = `
+      <div style="font-size:0.82em;color:#8a7da8;margin-bottom:10px">
+        Same spec · +${dungeon.keyLevel} · ${character.spec} ${character.class}
+        ${timeDiff ? ` · <span class="${timeDiff.startsWith('+') ? 'red' : 'green'}">${timeDiff} vs top 5 avg</span>` : ''}
+      </div>
+      <div style="overflow-x:auto">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Player</th>
+              <th>Key</th>
+              ${hasIlvl ? '<th>iLvl</th>' : ''}
+              <th>Score</th>
+              <th>Clear Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="you-row">
+              <td style="color:#f0d050">★</td>
+              <td>
+                <div class="player-name">${character.name}</div>
+                <div class="player-realm">${character.realm}</div>
+              </td>
+              <td>+${dungeon.keyLevel}</td>
+              ${hasIlvl ? `<td>${character.ilvl || '—'}</td>` : ''}
+              <td style="color:#c9a0ff">${dungeon.score.toFixed(1)}</td>
+              <td style="color:${dungeon.status === 'green' ? '#5fe88a' : dungeon.status === 'yellow' ? '#f0d050' : '#ff6b6b'}">${dungeon.clearTimeFormatted}</td>
+            </tr>
+            ${players.map((p, i) => {
+              const timeClass = dungeon.clearTimeMs && p.clearTimeMs
+                ? (dungeon.clearTimeMs < p.clearTimeMs ? 'green' : 'red')
+                : '';
+              return `<tr>
+                <td style="color:#8a7da8">${i + 1}</td>
+                <td>
+                  <div class="player-name">${p.url ? `<a href="${p.url}" target="_blank" style="color:#c9a0ff;text-decoration:none">${p.name}</a>` : p.name}</div>
+                  <div class="player-realm">${p.realm}</div>
+                </td>
+                <td>+${p.keyLevel}</td>
+                ${hasIlvl ? `<td>${p.ilvl != null ? p.ilvl : '—'}</td>` : ''}
+                <td style="color:#5fe88a">${p.score.toFixed(1)}</td>
+                <td class="${timeClass}">${p.clearTimeFormatted}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    if (panel) panel.innerHTML = tableHtml;
+
+    // Update inline card compact view
+    const cinline = document.getElementById(`cinline-${slug}`);
+    if (cinline && avgTime) {
+      const diffColor = timeDiff && timeDiff.startsWith('+') ? '#ff6b6b' : '#5fe88a';
+      cinline.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="color:#8a7da8">Top 5 Avg Time</span>
+          <span>
+            <span class="green" style="font-weight:600">${avgTime}</span>
+            ${timeDiff ? `<span style="color:${diffColor};margin-left:8px;font-size:0.9em">${timeDiff}</span>` : ''}
+          </span>
+        </div>
+        <div style="text-align:right;margin-top:4px">
+          <button onclick="switchCompTab('${slug}');document.getElementById('compSection').scrollIntoView({behavior:'smooth'})"
+            style="background:none;border:none;color:#8a6dba;font-size:0.78em;cursor:pointer;padding:0">
+            View full comparison ↓
+          </button>
+        </div>
+      `;
+    } else if (cinline) {
+      cinline.innerHTML = `<span style="color:#6a5d88;font-size:0.82em">Comparison data unavailable</span>`;
+    }
+
+  } catch (err) {
+    if (tab) tab.classList.remove('loading-tab');
+    if (panel) panel.innerHTML = `<div class="comp-error-msg">Failed to load comparison: ${err.message}</div>`;
+    const cinline = document.getElementById(`cinline-${slug}`);
+    if (cinline) cinline.innerHTML = `<span style="color:#6a5d88;font-size:0.82em">Comparison unavailable</span>`;
+  }
+}
+
+function showCompTab(slug) {
+  document.querySelectorAll('.comp-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.dungeon-tab').forEach(t => t.classList.remove('active'));
+  const panel = document.getElementById(`panel-${slug}`);
+  const tab   = document.getElementById(`tab-${slug}`);
+  if (panel) panel.classList.add('active');
+  if (tab)   tab.classList.add('active');
+}
+
+function switchCompTab(slug) {
+  showCompTab(slug);
+}
+
+function formatMsToStr(ms) {
+  if (!ms) return '?:??';
+  const s = Math.floor(ms / 1000);
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
 }
 </script>
 </body>

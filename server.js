@@ -20,6 +20,13 @@ function realmToSlug(realm) {
   return realm.toLowerCase().replace(/[''']/g, '').replace(/\s+/g, '-');
 }
 
+function slugifyForRIO(name) {
+  return (name || '').toLowerCase()
+    .replace(/['''`\u2018\u2019]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function formatTime(ms) {
   if (!ms) return '?:??';
   const totalSeconds = Math.floor(ms / 1000);
@@ -28,16 +35,22 @@ function formatTime(ms) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-// Rough estimate of max score achievable at a given key level (per dungeon per affix)
+function extractSeason(allRuns) {
+  for (const run of (allRuns || [])) {
+    const m = (run.url || '').match(/\/(season-[a-z0-9-]+)\//);
+    if (m) return m[1];
+  }
+  return 'season-tww-2';
+}
+
+// Rough estimate of max score achievable at a given key level
 function getApproxMaxScore(keyLevel) {
-  // Based on RIO scoring: roughly exponential growth per key level
   const base = 38;
   const factor = 1.115;
   return Math.round(base * Math.pow(factor, Math.max(0, keyLevel - 2)));
 }
 
 function computeGrade(score, timingRate, dungeonCount) {
-  // 0-100 point scale: score (0-65) + timing (0-25) + coverage (0-10)
   let points = 0;
 
   if (score >= 4500) points += 65;
@@ -70,7 +83,7 @@ function computeGrade(score, timingRate, dungeonCount) {
 }
 
 function getGradeDescription(grade, data) {
-  const { timingRate, depleted, avgKeyLevel } = data;
+  const { depleted } = data;
   switch (grade) {
     case 'A+': return 'Elite performer. Dominating top-end keys with exceptional consistency.';
     case 'A':  return 'Excellent performance. Crushing high keys — borderline elite.';
@@ -89,25 +102,57 @@ function getGradeDescription(grade, data) {
   }
 }
 
-function generateFixes(dungeons, metrics) {
+function generateFixes(dungeons, metrics, wclData) {
   const fixes = [];
   const depleted = dungeons.filter(d => d.upgrades === 0);
   const bareTimes = dungeons.filter(d => d.upgrades === 1 && d.timePercent > 88);
   const sortedByScore = [...dungeons].sort((a, b) => a.score - b.score);
   const POOL_SIZE = 8;
 
-  // Fix 1: Depleted keys
-  if (depleted.length > 0) {
+  // WCL-based fixes (DPS parse)
+  if (wclData?.bestParse != null) {
+    const best = wclData.bestParse;
+    const median = wclData.medianParse ?? best;
+    const consistency = best - median;
+
+    if (median < 50) {
+      fixes.push({
+        priority: 1,
+        title: 'Do More Damage',
+        description: `Your typical DPS is around the ${Math.round(median)}th percentile — below average. The top players at your key level do significantly more. Use cooldowns on big trash pulls, not just bosses. Stay in melee/range and never stand idle between pulls.${best > 60 ? ` You can do better — your best parse (${Math.round(best)}%) proves it.` : ''}`,
+        target: `Target: Get median DPS parse above 55% in every dungeon`
+      });
+    } else if (best < 70) {
+      fixes.push({
+        priority: 1,
+        title: 'Push Your DPS Higher',
+        description: `Your best parse is ${Math.round(best)}% — okay but not great. Check your spec's top players on Warcraft Logs for talent and rotation tips. Focus on hitting ability priority correctly and not missing cooldown windows.`,
+        target: `Target: Best parse above 70%`
+      });
+    }
+
+    if (consistency > 25 && fixes.length < 3) {
+      fixes.push({
+        priority: fixes.length + 1,
+        title: 'Be More Consistent',
+        description: `Your best parse (${Math.round(best)}%) is way above your median (${Math.round(median)}%) — a ${Math.round(consistency)} point gap. Good players keep this under 20. Some runs you're playing great, others you're off. Take a break after 2 failed keys in a row.`,
+        target: `Target: Bring median parse within 20 points of your best`
+      });
+    }
+  }
+
+  // Depleted keys fix
+  if (depleted.length > 0 && fixes.length < 3) {
     fixes.push({
-      priority: 1,
+      priority: fixes.length + 1,
       title: `Stop Depleting Keys (${depleted.length} dungeon${depleted.length > 1 ? 's' : ''})`,
-      description: `Depleted runs in: ${depleted.map(d => d.name).join(', ')}. Depleted keystones score lower and break the stone. Drop 2–3 levels until you're timing consistently, then climb back up.`,
+      description: `Depleted runs in: ${depleted.map(d => d.name).join(', ')}. Depleted keystones score lower and break the stone. Drop 2–3 key levels until you're timing consistently, then climb back up.`,
       target: `Action: Run depleted dungeons 2–3 levels lower until timed`
     });
   }
 
-  // Fix 2: Worst dungeon if gap is significant
-  if (dungeons.length > 1) {
+  // Worst dungeon gap
+  if (dungeons.length > 1 && fixes.length < 3) {
     const worst = sortedByScore[0];
     const best = sortedByScore[sortedByScore.length - 1];
     const gap = best.score - worst.score;
@@ -115,14 +160,14 @@ function generateFixes(dungeons, metrics) {
       fixes.push({
         priority: fixes.length + 1,
         title: `Boost Your Weakest: ${worst.name}`,
-        description: `${worst.name} at +${worst.keyLevel} is ${gap.toFixed(0)} score behind your best dungeon. Dedicate a session to farming this one — watch a route video, study the skips, and push 2 levels higher.`,
+        description: `${worst.name} at +${worst.keyLevel} is ${gap.toFixed(0)} score behind your best dungeon. Watch a route video on YouTube, study the skips, and push it 2 levels higher.`,
         target: `Current: +${worst.keyLevel} (${worst.score.toFixed(0)} pts) → Target: +${worst.keyLevel + 2}`
       });
     }
   }
 
-  // Fix 3: Missing dungeons
-  if (dungeons.length < POOL_SIZE) {
+  // Missing dungeons
+  if (dungeons.length < POOL_SIZE && fixes.length < 3) {
     const missing = POOL_SIZE - dungeons.length;
     fixes.push({
       priority: fixes.length + 1,
@@ -132,30 +177,32 @@ function generateFixes(dungeons, metrics) {
     });
   }
 
-  // Padding fixes if needed
+  // Bare times (barely timed)
   if (fixes.length < 3 && bareTimes.length > 0) {
     fixes.push({
       priority: fixes.length + 1,
-      title: `Improve Clear Speed`,
-      description: `${bareTimes.map(d => d.name).join(', ')} were barely timed (close to the limit). Faster clears = higher upgrades = better score. Focus on skips, CC usage, and bloodlust timing.`,
+      title: 'Improve Clear Speed',
+      description: `${bareTimes.map(d => d.name).join(', ')} were barely timed (over 88% of the timer used). Faster clears = higher upgrades = better score. Focus on skips, CC usage, and bloodlust timing.`,
       target: `Target: +2 upgrade (under 80% of par time) in slow dungeons`
     });
   }
 
+  // Push higher
   if (fixes.length < 3 && dungeons.length > 0) {
     const avgLevel = Math.round(dungeons.reduce((s, d) => s + d.keyLevel, 0) / dungeons.length);
     fixes.push({
       priority: fixes.length + 1,
-      title: `Push Higher Key Levels`,
+      title: 'Push Higher Key Levels',
       description: `You're timing your current range well. Each key level adds ~15–20 points per dungeon. Start pushing 2–3 levels above your current best to build score momentum.`,
       target: `Target: Push to +${avgLevel + 3} in your top 2–3 dungeons`
     });
   }
 
+  // Consistency padding
   while (fixes.length < 3) {
     fixes.push({
       priority: fixes.length + 1,
-      title: `Maintain Consistency`,
+      title: 'Maintain Consistency',
       description: `Keep pushing keys and maintain a high timing rate across all dungeons. Consistency is what separates good players from great ones.`,
       target: `Target: Time 90%+ of your runs`
     });
@@ -196,11 +243,13 @@ async function fetchRaiderIO(name, realm, region) {
 
 async function fetchWCL(name, realm, region) {
   const realmSlug = realmToSlug(realm);
-  const url = `https://www.warcraftlogs.com/character/${region.toLowerCase()}/${realmSlug}/${name.toLowerCase()}`;
+  const baseUrl = `https://www.warcraftlogs.com/character/${region.toLowerCase()}/${realmSlug}/${name.toLowerCase()}`;
+  // zone=47 = M+ zone in current WoW, metric=playerscore
+  const url = `${baseUrl}?zone=47&metric=playerscore`;
 
   const response = await axios.get(url, {
     headers: BROWSER_HEADERS,
-    timeout: 12000,
+    timeout: 15000,
     maxRedirects: 5
   });
 
@@ -208,30 +257,81 @@ async function fetchWCL(name, realm, region) {
   const nextDataText = $('#__NEXT_DATA__').html();
   if (!nextDataText) return null;
 
-  const nextData = JSON.parse(nextDataText);
+  let nextData;
+  try { nextData = JSON.parse(nextDataText); } catch { return null; }
+
   const pageProps = nextData?.props?.pageProps;
   if (!pageProps) return null;
 
-  // WCL page structure varies — best-effort extraction of parse data
   const character = pageProps.character || pageProps.characterData?.character;
   if (!character) return null;
 
-  // Look for any M+ or DPS ranking data
-  const rankings = character.mythicPlusRankings
-    || character.zoneRankings
-    || character.encounterRankings
+  // WCL embeds zone ranking data in character object
+  const zoneRankings = character.zoneRankings
+    || character.mythicPlusRankings
     || null;
 
-  if (!rankings) return null;
+  const bestParse = zoneRankings?.bestPerformanceAverage ?? null;
+  const medianParse = zoneRankings?.medianPerformanceAverage ?? null;
 
-  return {
-    parses: rankings,
-    wclUrl: `https://www.warcraftlogs.com/character/${region.toLowerCase()}/${realmSlug}/${name.toLowerCase()}`
+  const dungeonRankings = (zoneRankings?.rankings || []).map(r => ({
+    encounter: r.encounter?.name || r.name || '',
+    rankPercent: r.rankPercent ?? r.bestPercent ?? null,
+    medianPercent: r.medianPercent ?? null,
+    bestAmount: r.bestAmount ?? null,      // DPS value
+    medianAmount: r.medianAmount ?? null,
+    spec: r.spec ?? null
+  }));
+
+  if (bestParse === null && dungeonRankings.length === 0) return null;
+
+  return { bestParse, medianParse, dungeonRankings, wclUrl: baseUrl };
+}
+
+// Fetch top players for a specific dungeon at a given key level and spec
+async function fetchDungeonRankings(region, dungeonSlug, keyLevel, className, specName, season) {
+  const url = 'https://raider.io/api/v1/mythic-plus/rankings/characters';
+  const params = {
+    region: region.toLowerCase(),
+    dungeon: dungeonSlug,
+    season,
+    class: slugifyForRIO(className),
+    spec: slugifyForRIO(specName),
+    page: 0
   };
+
+  const response = await axios.get(url, {
+    params,
+    timeout: 10000,
+    headers: { 'Accept': 'application/json', 'User-Agent': 'WoW-M-Plus-Analyzer/1.0' }
+  });
+
+  const characters = response.data?.rankings?.rankedCharacters || [];
+
+  // Prefer exact key level match, fall back to ±1, then take whatever's there
+  let filtered = characters.filter(c => (c.run?.mythic_level || 0) === keyLevel);
+  if (filtered.length < 3) {
+    filtered = characters.filter(c => Math.abs((c.run?.mythic_level || 0) - keyLevel) <= 1);
+  }
+  if (filtered.length === 0) {
+    filtered = characters.slice(0, 10);
+  }
+
+  return filtered.slice(0, 5).map(c => ({
+    name: c.character?.name || 'Unknown',
+    realm: c.character?.realm?.name || c.character?.realm?.slug || '',
+    ilvl: c.character?.gear?.item_level_equipped || null,
+    keyLevel: c.run?.mythic_level || keyLevel,
+    score: parseFloat((c.run?.score || c.score || 0).toFixed(1)),
+    clearTimeMs: c.run?.clear_time_ms || null,
+    clearTimeFormatted: formatTime(c.run?.clear_time_ms),
+    parTimeMs: c.run?.par_time_ms || null,
+    url: c.run?.url || null,
+    rank: c.rank || null
+  }));
 }
 
 function processBestRuns(bestRuns, alternateRuns) {
-  // Merge best + alternate runs, keep highest-scoring run per dungeon
   const allRuns = [...(bestRuns || []), ...(alternateRuns || [])];
   const dungeonMap = {};
 
@@ -255,6 +355,7 @@ function processBestRuns(bestRuns, alternateRuns) {
 
     return {
       name: run.dungeon,
+      slug: slugifyForRIO(run.dungeon),
       shortName: run.short_name || run.dungeon.split(' ').map(w => w[0]).join('').toUpperCase(),
       keyLevel: run.mythic_level,
       score: parseFloat(run.score.toFixed(1)),
@@ -268,11 +369,13 @@ function processBestRuns(bestRuns, alternateRuns) {
       upgrades: run.num_keystone_upgrades,
       status,
       affixes: run.affixes ? run.affixes.map(a => a.name) : [],
-      url: run.url || null
+      url: run.url || null,
+      estimatedMaxScore: parseFloat((getApproxMaxScore(run.mythic_level) * 1.08).toFixed(1))
     };
   }).sort((a, b) => b.score - a.score);
 }
 
+// ── Main analyze endpoint ──
 app.post('/api/analyze', async (req, res) => {
   const { characterName, server, region } = req.body || {};
 
@@ -284,7 +387,6 @@ app.post('/api/analyze', async (req, res) => {
   }
 
   try {
-    // Primary: Raider.IO
     let rioData;
     try {
       rioData = await fetchRaiderIO(characterName, server, region);
@@ -301,29 +403,30 @@ app.post('/api/analyze', async (req, res) => {
       throw new Error(`Could not reach Raider.IO: ${err.message}`);
     }
 
-    // Secondary: WCL (best effort — never blocks the response)
+    // WCL scraping — best effort, never blocks response
     let wclData = null;
     try {
       wclData = await fetchWCL(characterName, server, region);
     } catch (_e) {
-      // Non-critical — proceed without WCL data
+      // Non-critical: proceed without WCL data
     }
 
-    // Process runs
     const dungeons = processBestRuns(rioData.mythic_plus_best_runs, rioData.mythic_plus_alternate_runs);
 
-    // Score metrics
+    // Extract season from run URLs for comparison calls
+    const allRuns = [...(rioData.mythic_plus_best_runs || []), ...(rioData.mythic_plus_alternate_runs || [])];
+    const season = extractSeason(allRuns);
+
     const scores = rioData.mythic_plus_scores_by_season?.current || {};
     const overallScore = scores.all || 0;
 
     const timedRuns = dungeons.filter(d => d.upgrades > 0);
     const timingRate = dungeons.length > 0 ? timedRuns.length / dungeons.length : 0;
-    const depleted = dungeons.filter(d => d.upgrades === 0).length;
+    const depletedCount = dungeons.filter(d => d.upgrades === 0).length;
     const avgKeyLevel = dungeons.length > 0
       ? dungeons.reduce((s, d) => s + d.keyLevel, 0) / dungeons.length
       : 0;
 
-    // Score efficiency: how close each dungeon score is to estimated max at that key level
     const scoreEfficiency = dungeons.length > 0
       ? dungeons.reduce((sum, d) => {
           const estMax = getApproxMaxScore(d.keyLevel);
@@ -332,15 +435,9 @@ app.post('/api/analyze', async (req, res) => {
       : 0;
 
     const grade = computeGrade(overallScore, timingRate, dungeons.length);
-    const gradeCtx = { timingRate, depleted, avgKeyLevel, score: overallScore };
+    const gradeCtx = { timingRate, depleted: depletedCount, avgKeyLevel, score: overallScore };
     const gradeDescription = getGradeDescription(grade, gradeCtx);
-    const fixes = generateFixes(dungeons, gradeCtx);
-
-    // Estimated max scores per dungeon (for chart comparison)
-    const dungeonsWithMax = dungeons.map(d => ({
-      ...d,
-      estimatedMaxScore: parseFloat((getApproxMaxScore(d.keyLevel) * 1.08).toFixed(1))
-    }));
+    const fixes = generateFixes(dungeons, gradeCtx, wclData);
 
     res.json({
       success: true,
@@ -357,6 +454,7 @@ app.post('/api/analyze', async (req, res) => {
           ilvl: rioData.gear?.item_level_equipped || null,
           rioUrl: rioData.profile_url
         },
+        season,
         grade: {
           letter: grade,
           description: gradeDescription,
@@ -368,7 +466,7 @@ app.post('/api/analyze', async (req, res) => {
             tankScore: scores.tank || null,
             timingRate: parseFloat(timingRate.toFixed(3)),
             timingRatePct: parseFloat((timingRate * 100).toFixed(1)),
-            depleted,
+            depleted: depletedCount,
             avgKeyLevel: parseFloat(avgKeyLevel.toFixed(1)),
             scoreEfficiency: parseFloat(scoreEfficiency.toFixed(1)),
             rankWorld: rioData.mythic_plus_ranking?.world || null,
@@ -376,7 +474,7 @@ app.post('/api/analyze', async (req, res) => {
             rankRealm: rioData.mythic_plus_ranking?.realm || null
           }
         },
-        dungeons: dungeonsWithMax,
+        dungeons,
         fixes,
         wclData: wclData || null
       }
@@ -384,6 +482,33 @@ app.post('/api/analyze', async (req, res) => {
 
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// ── Comparison endpoint: top 5 same-spec players at same key level, closest ilvl ──
+app.post('/api/compare', async (req, res) => {
+  const { dungeonSlug, dungeonName, keyLevel, className, specName, region, playerIlvl, season } = req.body || {};
+
+  if (!dungeonSlug || !keyLevel || !className || !specName || !region) {
+    return res.status(400).json({ success: false, error: 'Missing required fields' });
+  }
+
+  try {
+    let players = await fetchDungeonRankings(
+      region, dungeonSlug, parseInt(keyLevel), className, specName, season || 'season-tww-2'
+    );
+
+    // Sort by ilvl proximity when both sides have ilvl data
+    if (playerIlvl && players.some(p => p.ilvl != null)) {
+      players.sort((a, b) =>
+        Math.abs((a.ilvl || 9999) - playerIlvl) - Math.abs((b.ilvl || 9999) - playerIlvl)
+      );
+    }
+
+    res.json({ success: true, data: { players, dungeonName, keyLevel } });
+  } catch (err) {
+    // Return graceful empty result instead of erroring
+    res.json({ success: false, error: err.message, data: { players: [] } });
   }
 });
 
