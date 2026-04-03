@@ -501,6 +501,25 @@
   .parse-item .parse-num { font-size: 1.5em; font-weight: 700; }
   .parse-item .parse-lbl { font-size: 0.78em; color: #8a7da8; margin-top: 2px; }
 
+  /* ── Ability Callouts ── */
+  .ability-callout {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    border: 1px solid;
+  }
+  .callout-red  { background: rgba(200,60,60,0.1);  border-color: rgba(200,60,60,0.3);  }
+  .callout-yellow { background: rgba(220,180,40,0.1); border-color: rgba(220,180,40,0.3); }
+  .callout-title { font-size: 0.95em; font-weight: 600; margin-bottom: 10px; }
+  .callout-red    .callout-title { color: #ff8a8a; }
+  .callout-yellow .callout-title { color: #f0d050; }
+  .callout-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; border-bottom: 1px solid rgba(128,80,200,0.1);
+    font-size: 0.88em; flex-wrap: wrap; gap: 6px;
+  }
+  .callout-item:last-child { border-bottom: none; }
+
   /* ── Footer ── */
   .footer {
     text-align: center; padding: 24px; color: #5a4d78; font-size: 0.84em;
@@ -635,7 +654,7 @@
 
   <!-- ── Ability Breakdown Section ── -->
   <div class="chart-section" id="abilitySection">
-    <h2>Ability Damage Breakdown</h2>
+    <h2>Ability Breakdown vs Top Players</h2>
     <div id="abilityContent"></div>
   </div>
 
@@ -783,8 +802,17 @@ function renderResults(data) {
   renderDungeons(dungeons, wclData);
   renderCharts(dungeons);
   renderFixes(fixes);
-  renderAbilitySection(character, wclData, dungeons);
   renderWCLNotice(character, wclData);
+
+  // Show ability section in loading state immediately
+  document.getElementById('abilitySection').style.display = 'block';
+  document.getElementById('abilityContent').innerHTML = `
+    <div style="text-align:center;padding:32px 20px;color:#a89bc2">
+      <div class="spinner" style="margin:0 auto 14px"></div>
+      <div class="loading-text">Loading ability data…</div>
+      <div style="font-size:0.8em;margin-top:8px;color:#6a5d88">Fetching your best WCL log and comparing to top players — may take 15–30 seconds</div>
+    </div>
+  `;
 
   document.getElementById('results').style.display = 'block';
   window.scrollTo({
@@ -793,8 +821,9 @@ function renderResults(data) {
     behavior: 'smooth'
   });
 
-  // Kick off async comparison loading
+  // Kick off async loads in parallel
   loadAllComparisons(character, dungeons, season);
+  loadAbilityCompare(character);
 }
 
 // ── Character Banner ──
@@ -1108,68 +1137,196 @@ function renderCharts(dungeons) {
   });
 }
 
-// ── Ability Section ──
-function renderAbilitySection(character, wclData, dungeons) {
-  const sec     = document.getElementById('abilitySection');
-  const content = document.getElementById('abilityContent');
+// ── Ability Compare (async) ──
+async function loadAbilityCompare(character) {
+  try {
+    const res = await fetch('/api/ability-compare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        characterName: character.name,
+        server: character.realm,
+        region: character.region,
+        zoneID: 47
+      })
+    });
+    const json = await res.json();
 
-  if (wclData?.dungeonRankings?.length > 0) {
-    // Build ability DPS chart from WCL dungeon data
-    const topDungeon = wclData.dungeonRankings
-      .filter(r => r.bestAmount)
-      .sort((a,b) => (b.bestAmount||0) - (a.bestAmount||0))[0];
-
-    if (topDungeon) {
-      const wclUrl = wclData.wclUrl || '#';
-      content.innerHTML = `
-        <div class="chart-subtitle">
-          Best performance: <span style="color:#c9a0ff">${topDungeon.encounter}</span> —
-          <span style="color:#5fe88a">${(topDungeon.bestAmount/1000).toFixed(1)}k DPS</span>
-          (${Math.round(topDungeon.rankPercent || 0)}th percentile)
-        </div>
-        <div style="margin:16px 0;padding:16px;background:rgba(0,0,0,0.2);border-radius:10px;">
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
-            ${wclData.dungeonRankings.filter(r => r.rankPercent != null).map(r => `
-              <div style="text-align:center;padding:10px;background:rgba(100,60,180,0.15);border-radius:8px;border:1px solid rgba(128,80,200,0.15)">
-                <div style="color:#8a7da8;font-size:0.78em;margin-bottom:4px">${r.encounter}</div>
-                <div style="font-size:1.3em;font-weight:700;color:${parseColor(r.rankPercent)}">${Math.round(r.rankPercent)}%</div>
-                <div style="font-size:0.72em;color:#6a5d88">parse</div>
-                ${r.bestAmount ? `<div style="font-size:0.85em;color:#a89bc2;margin-top:2px">${(r.bestAmount/1000).toFixed(1)}k DPS</div>` : ''}
-              </div>
-            `).join('')}
-          </div>
-        </div>
-        <div style="text-align:center;margin-top:10px">
-          <div style="font-size:0.8em;color:#6a5d88;margin-bottom:8px">For full ability-by-ability breakdown with casts per minute:</div>
-          <a class="wcl-btn" href="${wclUrl}" target="_blank">View Full Report on Warcraft Logs →</a>
+    if (!json.success || !json.data) {
+      const wclUrl = `https://www.warcraftlogs.com/character/${(character.region||'us').toLowerCase()}/${(character.realm||'').toLowerCase().replace(/\s+/g,'-')}/${(character.name||'').toLowerCase()}`;
+      document.getElementById('abilityContent').innerHTML = `
+        <div class="ability-notice">
+          <div class="big-icon">📊</div>
+          <h3>Ability Comparison Unavailable</h3>
+          <p>${json.error || 'Could not fetch ability data.'}</p>
+          <p style="font-size:0.82em">Make sure you have recent Warcraft Logs data for this character.</p>
+          <a class="wcl-btn" href="${wclUrl}" target="_blank">View on Warcraft Logs →</a>
         </div>
       `;
-      sec.style.display = 'block';
       return;
     }
-  }
 
-  // Fallback: no WCL data — show placeholder
-  const wclUrl = character
-    ? `https://www.warcraftlogs.com/character/${(character.region||'us').toLowerCase()}/${(character.realm||'').toLowerCase().replace(/\s+/g,'-')}/${(character.name||'').toLowerCase()}`
-    : 'https://www.warcraftlogs.com';
+    renderAbilityCompare(json.data, character);
+
+  } catch (err) {
+    document.getElementById('abilityContent').innerHTML = `
+      <div style="padding:20px;text-align:center;color:#ff8a8a">Failed to load ability data: ${err.message}</div>
+    `;
+  }
+}
+
+function abilityBarColor(playerPct, avgPct) {
+  if (!avgPct) return 'rgba(150,80,220,0.7)';
+  const ratio = playerPct / avgPct;
+  if (ratio >= 0.9) return 'rgba(95,232,138,0.75)';
+  if (ratio >= 0.7) return 'rgba(240,208,80,0.75)';
+  return 'rgba(255,107,107,0.75)';
+}
+
+function renderAbilityCompare(data, character) {
+  const { combined, missingAbilities, underusedAbilities, peers, dungeon, rankPercent, fightDurationMs, bracketMin, bracketMax, playerIlvl } = data;
+  const content = document.getElementById('abilityContent');
+
+  const bracketStr = bracketMin && bracketMax ? `ilvl ${bracketMin}–${bracketMax}` : playerIlvl ? `ilvl ~${playerIlvl}` : 'all ilvls';
+  const durationMin = fightDurationMs ? (fightDurationMs / 60000).toFixed(1) : '?';
+
+  // Peer reference table
+  const peerRows = peers.length ? peers.map(p => `
+    <tr>
+      <td style="color:#8a7da8">${p.rank}</td>
+      <td>
+        <span class="player-name">${p.name}</span>
+        <span class="player-realm" style="margin-left:6px">${p.realm}</span>
+      </td>
+      <td>${p.ilvl || '—'}</td>
+      <td style="color:#5fe88a">${p.dps > 0 ? (p.dps/1000).toFixed(1)+'k' : '—'}</td>
+      <td style="color:${p.rankPercent ? parseColor(p.rankPercent) : '#8a7da8'}">${p.rankPercent ? Math.round(p.rankPercent)+'%' : '—'}</td>
+    </tr>
+  `).join('') : `<tr><td colspan="5" style="text-align:center;color:#6a5d88">No peer data found in bracket</td></tr>`;
+
+  // Chart: top 10 by max(player%, avg%)
+  const top10 = combined.slice(0, 10);
+  const chartLabels = top10.map(a => a.name.length > 20 ? a.name.slice(0,18)+'…' : a.name);
+  const playerData  = top10.map(a => parseFloat(a.playerDmgPct.toFixed(1)));
+  const avgData     = top10.map(a => parseFloat(a.avgDmgPct.toFixed(1)));
+  const barColors   = top10.map(a => abilityBarColor(a.playerDmgPct, a.avgDmgPct));
+
+  // CPM table
+  const cpmRows = combined.filter(a => a.avgCpm > 0.3 || a.playerCpm > 0.3).slice(0, 12).map(a => {
+    const diff = a.playerCpm - a.avgCpm;
+    const diffColor = Math.abs(diff) < 0.3 ? '#8a7da8' : diff > 0 ? '#5fe88a' : '#ff8a8a';
+    return `<tr>
+      <td>${a.name}</td>
+      <td style="color:#c9a0ff">${a.playerCpm.toFixed(1)}</td>
+      <td style="color:#8a7da8">${a.avgCpm.toFixed(1)}</td>
+      <td style="color:${diffColor}">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}</td>
+    </tr>`;
+  }).join('');
+
+  // Missing / underused callouts
+  const missingHtml = missingAbilities.length ? `
+    <div class="ability-callout callout-red">
+      <div class="callout-title">⚠ Missing Abilities — Top ${peers.length} use these, you don't</div>
+      ${missingAbilities.map(a => `
+        <div class="callout-item">
+          <span>${a.name}</span>
+          <span style="color:#ff8a8a">${a.avgDmgPct.toFixed(1)}% avg damage · ${a.avgCpm.toFixed(1)} CPM</span>
+        </div>`).join('')}
+    </div>` : '';
+
+  const underusedHtml = underusedAbilities.length ? `
+    <div class="ability-callout callout-yellow">
+      <div class="callout-title">⚡ Underused Abilities — Your CPM &lt; 50% of top ${peers.length} avg</div>
+      ${underusedAbilities.map(a => `
+        <div class="callout-item">
+          <span>${a.name}</span>
+          <span style="color:#f0d050">Your ${a.playerCpm.toFixed(1)} CPM vs avg ${a.avgCpm.toFixed(1)} CPM (${Math.round(a.ratio*100)}%)</span>
+        </div>`).join('')}
+    </div>` : '';
 
   content.innerHTML = `
-    <div class="ability-notice">
-      <div class="big-icon">📊</div>
-      <h3>Ability Breakdown Not Available</h3>
-      <p>
-        Damage breakdown by ability (top 10 abilities, casts per minute, damage per cast)
-        requires Warcraft Logs data. WCL scraping didn't return ability data for this character.
-      </p>
-      <p style="font-size:0.82em">
-        Log your runs to Warcraft Logs and this section will show ability comparisons —
-        which spells you're underusing, missing talents, and CPM vs top players.
-      </p>
-      <a class="wcl-btn" href="${wclUrl}" target="_blank">View on Warcraft Logs →</a>
+    <div class="chart-subtitle" style="margin-bottom:18px">
+      Best run: <span style="color:#c9a0ff">${dungeon || 'Unknown'}</span>
+      ${rankPercent ? ` · <span style="color:${parseColor(rankPercent)}">${Math.round(rankPercent)}th percentile</span>` : ''}
+      · ${durationMin} min · Comparing to <span style="color:#c9a0ff">${peers.length} top player${peers.length !== 1 ? 's' : ''}</span> (${bracketStr})
     </div>
+
+    <div class="section-title" style="font-size:1.05em;margin-bottom:12px">Reference Players</div>
+    <div style="overflow-x:auto;margin-bottom:22px">
+      <table class="comparison-table">
+        <thead><tr><th>Rank</th><th>Player</th><th>iLvl</th><th>DPS</th><th>Parse %</th></tr></thead>
+        <tbody>${peerRows}</tbody>
+      </table>
+    </div>
+
+    <div class="section-title" style="font-size:1.05em;margin-bottom:6px">Damage % by Ability</div>
+    <div style="font-size:0.8em;color:#8a7da8;margin-bottom:12px">
+      Bar color: <span style="color:#5fe88a">■ within 10%</span> &nbsp;
+      <span style="color:#f0d050">■ 10–30% off</span> &nbsp;
+      <span style="color:#ff6b6b">■ &gt;30% off</span>
+    </div>
+    <div class="chart-container-tall">
+      <canvas id="abilityChart"></canvas>
+    </div>
+
+    <div class="section-title" style="font-size:1.05em;margin:22px 0 12px">Casts Per Minute</div>
+    <div style="overflow-x:auto;margin-bottom:18px">
+      <table class="comparison-table">
+        <thead><tr><th>Ability</th><th>Your CPM</th><th>Top ${peers.length} Avg CPM</th><th>Diff</th></tr></thead>
+        <tbody>${cpmRows || '<tr><td colspan="4" style="text-align:center;color:#6a5d88">No CPM data</td></tr>'}</tbody>
+      </table>
+    </div>
+
+    ${missingHtml}
+    ${underusedHtml}
   `;
-  sec.style.display = 'block';
+
+  // Render horizontal grouped bar chart
+  if (abilityChartInst) { abilityChartInst.destroy(); abilityChartInst = null; }
+  if (top10.length > 0) {
+    const ttBase = {
+      backgroundColor: 'rgba(20,10,40,0.95)', borderColor: 'rgba(128,80,200,0.4)',
+      borderWidth: 1, titleColor: '#c9a0ff', bodyColor: '#e0d8f0'
+    };
+    abilityChartInst = new Chart(document.getElementById('abilityChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: chartLabels,
+        datasets: [
+          {
+            label: 'You (%)',
+            data: playerData,
+            backgroundColor: barColors,
+            borderColor: barColors.map(c => c.replace('0.75','1').replace('0.7','1')),
+            borderWidth: 1, borderRadius: 4
+          },
+          {
+            label: `Top ${peers.length} Avg (%)`,
+            data: avgData,
+            backgroundColor: 'rgba(80,150,220,0.5)',
+            borderColor: 'rgba(80,180,255,0.8)',
+            borderWidth: 1, borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#a89bc2', padding: 14 } },
+          tooltip: { ...ttBase, callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.x.toFixed(1)}%` } }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#a89bc2', callback: v => v + '%' },
+            grid: { color: 'rgba(128,80,200,0.12)' },
+            title: { display: true, text: '% of Total Damage', color: '#8a7da8' }
+          },
+          y: { ticks: { color: '#a89bc2' }, grid: { color: 'rgba(128,80,200,0.12)' } }
+        }
+      }
+    });
+  }
 }
 
 // ── Fixes ──

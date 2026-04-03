@@ -549,6 +549,246 @@ app.post('/api/compare', async (req, res) => {
   }
 });
 
+// ── WCL centralized query helper ──
+async function wclQuery(queryStr, variables) {
+  const token = await getWCLToken();
+  const resp = await axios.post(
+    'https://www.warcraftlogs.com/api/v2/client',
+    { query: queryStr, variables },
+    {
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      timeout: 20000
+    }
+  );
+  const errors = resp.data?.errors;
+  if (errors?.length) throw new Error(errors[0].message);
+  return resp.data?.data;
+}
+
+// Get best-ranked dungeon log (reportCode + fightID + encounterID) from zoneRankings
+async function getCharBestLog(name, realm, region, zoneID) {
+  const realmSlug = realmToSlug(realm);
+  const data = await wclQuery(
+    `query GetZoneRankings($name: String!, $serverSlug: String!, $serverRegion: String!, $zoneID: Int!) {
+      characterData {
+        character(name: $name, serverSlug: $serverSlug, serverRegion: $serverRegion) {
+          zoneRankings(zoneID: $zoneID)
+        }
+      }
+    }`,
+    { name: name.toLowerCase(), serverSlug: realmSlug, serverRegion: region.toUpperCase(), zoneID: parseInt(zoneID) }
+  );
+  const rankings = data?.characterData?.character?.zoneRankings?.rankings || [];
+  const best = rankings
+    .filter(r => r.report?.code && r.report?.fightID != null)
+    .sort((a, b) => (b.rankPercent || 0) - (a.rankPercent || 0))[0];
+  if (!best) return null;
+  return {
+    encounterID: best.encounter?.id,
+    encounterName: best.encounter?.name,
+    reportCode: best.report.code,
+    fightID: best.report.fightID,
+    rankPercent: best.rankPercent
+  };
+}
+
+// Fetch DamageDone table for a specific player in a specific fight
+async function getReportTable(reportCode, fightID, characterName) {
+  const filterExpr = `source.name = "${characterName}"`;
+  const data = await wclQuery(
+    `query GetTable($code: String!, $fightIDs: [Int]!, $filterExpression: String) {
+      reportData {
+        report(code: $code) {
+          table(fightIDs: $fightIDs, dataType: DamageDone, filterExpression: $filterExpression)
+        }
+      }
+    }`,
+    { code: reportCode, fightIDs: [fightID], filterExpression: filterExpr }
+  );
+  const tableData = data?.reportData?.report?.table?.data;
+  if (!tableData) return null;
+  return { totalTime: tableData.totalTime || 0, entries: tableData.entries || [] };
+}
+
+// Normalize ability entries into {name, damagePercent, cpm, ...}
+function processAbilities(entries, totalTimeMs) {
+  if (!entries?.length || !totalTimeMs) return [];
+  const totalDmg = entries.reduce((s, e) => s + (e.total || 0), 0);
+  const durationMin = totalTimeMs / 60000;
+  return entries
+    .filter(e => e.total > 0 && e.name && !e.name.startsWith('(') && e.name !== 'Unknown')
+    .map(e => ({
+      name: e.name,
+      id: e.id || 0,
+      total: e.total,
+      hitCount: e.hitCount || 0,
+      damagePercent: totalDmg > 0 ? (e.total / totalDmg) * 100 : 0,
+      cpm: durationMin > 0 ? (e.hitCount || 0) / durationMin : 0,
+      icon: e.icon || ''
+    }))
+    .sort((a, b) => b.total - a.total);
+}
+
+// Get top-ranked players for an encounter+spec, filtered by ilvl bracket
+async function getTopEncounterPlayers(encounterID, specName, className, playerIlvl) {
+  const wclClass = (className || '').replace(/\s+/g, ''); // "Death Knight" → "DeathKnight"
+  const data = await wclQuery(
+    `query GetEncRankings($encounterID: Int!, $specName: String!, $className: String!) {
+      worldData {
+        encounter(id: $encounterID) {
+          characterRankings(specName: $specName, className: $className)
+        }
+      }
+    }`,
+    { encounterID: parseInt(encounterID), specName, className: wclClass }
+  );
+  const rankings = data?.worldData?.encounter?.characterRankings?.rankings || [];
+
+  let filtered = [];
+  let bracketUsed = null;
+  if (playerIlvl) {
+    for (const spread of [2, 4, 6]) {
+      filtered = rankings.filter(r => r.report?.code && Math.abs((r.bracketData || 0) - playerIlvl) <= spread);
+      if (filtered.length >= 5) { bracketUsed = spread; break; }
+    }
+  }
+  if (filtered.length < 5) {
+    filtered = rankings.filter(r => r.report?.code);
+    bracketUsed = null;
+  }
+
+  return {
+    players: filtered.slice(0, 5),
+    bracketMin: bracketUsed ? playerIlvl - bracketUsed : null,
+    bracketMax: bracketUsed ? playerIlvl + bracketUsed : null
+  };
+}
+
+// Average ability data across multiple peers (accounts for abilities not used by all)
+function averageAbilities(peerData) {
+  if (!peerData.length) return [];
+  const map = {};
+  for (const { abilities } of peerData) {
+    for (const a of abilities.slice(0, 20)) {
+      if (!map[a.name]) map[a.name] = { name: a.name, id: a.id, icon: a.icon, sumDmgPct: 0, sumCpm: 0 };
+      map[a.name].sumDmgPct += a.damagePercent;
+      map[a.name].sumCpm += a.cpm;
+    }
+  }
+  const total = peerData.length;
+  return Object.values(map)
+    .map(a => ({ name: a.name, id: a.id, icon: a.icon, avgDmgPct: a.sumDmgPct / total, avgCpm: a.sumCpm / total }))
+    .sort((a, b) => b.avgDmgPct - a.avgDmgPct);
+}
+
+// ── Ability Compare endpoint ──
+app.post('/api/ability-compare', async (req, res) => {
+  const { characterName, server, region, zoneID = 47 } = req.body || {};
+  if (!characterName || !server || !region) {
+    return res.status(400).json({ success: false, error: 'Missing required fields' });
+  }
+
+  try {
+    // Fetch RIO for ilvl, class, spec
+    let playerIlvl = null, playerSpec = null, playerClass = null, canonicalName = characterName;
+    try {
+      const rio = await fetchRaiderIO(characterName, server, region);
+      playerIlvl = rio.gear?.item_level_equipped || null;
+      playerSpec  = rio.active_spec_name || null;
+      playerClass = rio.class || null;
+      canonicalName = rio.name || characterName; // properly capitalized
+    } catch (_) {}
+
+    // Get best log (reportCode, fightID, encounterID)
+    const bestLog = await getCharBestLog(characterName, server, region, zoneID);
+    if (!bestLog?.encounterID) {
+      return res.json({ success: false, error: 'No WCL logs found. Log a run to Warcraft Logs first.', data: null });
+    }
+
+    // Get player's damage breakdown
+    const playerTable = await getReportTable(bestLog.reportCode, bestLog.fightID, canonicalName);
+    if (!playerTable?.totalTime) {
+      return res.json({ success: false, error: 'Could not load ability data from the WCL report.', data: null });
+    }
+    const playerAbilities = processAbilities(playerTable.entries, playerTable.totalTime);
+
+    // Get top 5 peers (same encounter + spec, ilvl bracket)
+    const specName  = playerSpec || 'Unknown';
+    const className = playerClass || 'Unknown';
+    const { players: topPlayers, bracketMin, bracketMax } =
+      await getTopEncounterPlayers(bestLog.encounterID, specName, className, playerIlvl);
+
+    // Fetch peer ability tables in parallel
+    const peerResults = await Promise.allSettled(
+      topPlayers.map(p =>
+        getReportTable(p.report.code, p.report.fightID, p.name)
+          .then(table => ({ p, table }))
+      )
+    );
+
+    const peerData = peerResults
+      .filter(r => r.status === 'fulfilled' && r.value?.table?.totalTime)
+      .map(r => ({ player: r.value.p, abilities: processAbilities(r.value.table.entries, r.value.table.totalTime) }));
+
+    const avgAbilities = averageAbilities(peerData);
+
+    // Build combined per-ability comparison
+    const playerMap = Object.fromEntries(playerAbilities.map(a => [a.name, a]));
+    const avgMap    = Object.fromEntries(avgAbilities.map(a => [a.name, a]));
+    const topNames  = [...new Set([
+      ...playerAbilities.slice(0, 12).map(a => a.name),
+      ...avgAbilities.slice(0, 12).map(a => a.name)
+    ])];
+    const combined = topNames.map(name => ({
+      name,
+      playerDmgPct: playerMap[name]?.damagePercent || 0,
+      playerCpm:    playerMap[name]?.cpm || 0,
+      avgDmgPct:    avgMap[name]?.avgDmgPct || 0,
+      avgCpm:       avgMap[name]?.avgCpm || 0
+    })).sort((a, b) => Math.max(b.playerDmgPct, b.avgDmgPct) - Math.max(a.playerDmgPct, a.avgDmgPct));
+
+    const missingAbilities = avgAbilities
+      .filter(a => a.avgDmgPct > 1.5 && !playerMap[a.name])
+      .slice(0, 5)
+      .map(a => ({ name: a.name, avgDmgPct: a.avgDmgPct, avgCpm: a.avgCpm }));
+
+    const underusedAbilities = combined
+      .filter(a => a.avgCpm > 0.4 && a.playerCpm > 0 && a.playerCpm < a.avgCpm * 0.5)
+      .slice(0, 5)
+      .map(a => ({ name: a.name, playerCpm: a.playerCpm, avgCpm: a.avgCpm, ratio: a.playerCpm / a.avgCpm }));
+
+    res.json({
+      success: true,
+      data: {
+        dungeon: bestLog.encounterName,
+        rankPercent: bestLog.rankPercent,
+        fightDurationMs: playerTable.totalTime,
+        playerAbilities: playerAbilities.slice(0, 15),
+        avgAbilities: avgAbilities.slice(0, 15),
+        combined: combined.slice(0, 15),
+        missingAbilities,
+        underusedAbilities,
+        peers: topPlayers.map((p, i) => ({
+          name: p.name,
+          realm: p.serverSlug || '',
+          region: p.serverRegion || region,
+          ilvl: p.bracketData || null,
+          dps: Math.round(p.amount || 0),
+          rank: p.rank || i + 1,
+          rankPercent: p.rankPercent || null
+        })),
+        bracketMin,
+        bracketMax,
+        playerIlvl
+      }
+    });
+
+  } catch (err) {
+    console.error('[ability-compare]', err.message);
+    res.json({ success: false, error: err.message, data: null });
+  }
+});
+
 // Catch-all — serve frontend for any unmatched GET
 app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
