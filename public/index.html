@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WoW M+ Analyzer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0d0b1a 0%, #1a1335 50%, #0d0b1a 100%);
+    background-attachment: fixed;
+    color: #e0d8f0;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  /* ── Search Section ── */
+  .search-section {
+    max-width: 860px;
+    margin: 0 auto 32px;
+  }
+
+  .header {
+    text-align: center;
+    padding: 36px 24px 28px;
+    background: linear-gradient(180deg, rgba(88,48,148,0.45) 0%, rgba(30,20,60,0.6) 100%);
+    border-radius: 18px;
+    border: 1px solid rgba(128,80,200,0.3);
+    margin-bottom: 20px;
+  }
+
+  .header h1 {
+    font-size: 2.4em;
+    color: #c9a0ff;
+    text-shadow: 0 0 24px rgba(180,120,255,0.45);
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  .header .subtitle {
+    font-size: 1.05em;
+    color: #a89bc2;
+  }
+
+  .form-card {
+    background: linear-gradient(180deg, rgba(35,22,60,0.9) 0%, rgba(18,10,35,0.95) 100%);
+    border-radius: 14px;
+    border: 1px solid rgba(128,80,200,0.25);
+    padding: 24px;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .form-group label {
+    font-size: 0.8em;
+    color: #8a7da8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-input, .form-select {
+    background: rgba(0,0,0,0.45);
+    border: 1px solid rgba(128,80,200,0.35);
+    color: #e0d8f0;
+    padding: 11px 14px;
+    border-radius: 10px;
+    font-size: 1em;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  .form-input::placeholder { color: #6a5d88; }
+  .form-select option { background: #1a1335; }
+
+  .form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: rgba(180,120,255,0.65);
+    box-shadow: 0 0 0 2px rgba(180,120,255,0.15);
+  }
+
+  .region-group { flex: 0 0 110px; min-width: 110px; }
+  .btn-group { flex: 0 0 auto; }
+
+  .analyze-btn {
+    background: linear-gradient(135deg, #7040c0 0%, #5030a0 100%);
+    color: #f0e8ff;
+    border: 1px solid rgba(180,120,255,0.3);
+    padding: 11px 30px;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    height: 44px;
+  }
+
+  .analyze-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #8050d4 0%, #6040b4 100%);
+    box-shadow: 0 0 16px rgba(180,120,255,0.3);
+    transform: translateY(-1px);
+  }
+
+  .analyze-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ── Loading ── */
+  .loading-box {
+    text-align: center;
+    padding: 40px 20px;
+    color: #a89bc2;
+    display: none;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 44px;
+    height: 44px;
+    border: 3px solid rgba(128,80,200,0.25);
+    border-top-color: #c9a0ff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 14px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text { font-size: 1.05em; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+  /* ── Error ── */
+  .error-box {
+    background: rgba(200,60,60,0.15);
+    border: 1px solid rgba(200,60,60,0.35);
+    border-radius: 12px;
+    padding: 18px 22px;
+    color: #ff8a8a;
+    margin-top: 16px;
+    display: none;
+    line-height: 1.5;
+  }
+
+  .error-box strong { display: block; margin-bottom: 6px; color: #ff6b6b; }
+
+  /* ── Results ── */
+  #results { display: none; max-width: 1200px; margin: 0 auto; }
+
+  /* Character Banner */
+  .char-banner {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 24px;
+    background: linear-gradient(180deg, rgba(35,22,60,0.9) 0%, rgba(18,10,35,0.95) 100%);
+    border-radius: 14px;
+    border: 1px solid rgba(128,80,200,0.25);
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .char-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid rgba(180,120,255,0.5);
+    object-fit: cover;
+    background: rgba(100,60,180,0.3);
+    flex-shrink: 0;
+  }
+
+  .char-avatar-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid rgba(180,120,255,0.5);
+    background: linear-gradient(135deg, rgba(100,60,180,0.4), rgba(60,30,120,0.6));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6em;
+    flex-shrink: 0;
+  }
+
+  .char-info { flex: 1; min-width: 200px; }
+  .char-name { font-size: 1.4em; font-weight: 700; color: #c9a0ff; margin-bottom: 3px; }
+  .char-details { font-size: 0.9em; color: #a89bc2; }
+  .char-details span { color: #e0d8f0; font-weight: 600; }
+
+  .char-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .char-meta-item { text-align: center; }
+  .char-meta-item .meta-val { font-size: 1.2em; font-weight: 700; color: #c9a0ff; }
+  .char-meta-item .meta-lbl { font-size: 0.75em; color: #8a7da8; }
+
+  .rio-link {
+    color: #8a6dba;
+    text-decoration: none;
+    font-size: 0.85em;
+    padding: 6px 14px;
+    border: 1px solid rgba(128,80,200,0.3);
+    border-radius: 8px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .rio-link:hover { border-color: rgba(180,120,255,0.5); color: #c9a0ff; }
+
+  /* ── Grade Box ── */
+  .grade-box {
+    text-align: center;
+    padding: 32px;
+    background: linear-gradient(180deg, rgba(40,25,70,0.85) 0%, rgba(20,12,40,0.95) 100%);
+    border-radius: 16px;
+    border: 2px solid rgba(200,160,50,0.35);
+    margin-bottom: 22px;
+  }
+
+  .grade-label { font-size: 1.1em; color: #a89bc2; margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
+  .grade { font-size: 5em; font-weight: 900; line-height: 1; text-shadow: 0 0 30px rgba(240,192,64,0.5); }
+  .grade-A { color: #5fe88a; }
+  .grade-B { color: #60c0ff; }
+  .grade-C { color: #f0c040; }
+  .grade-D { color: #ff8a5c; }
+  .grade-F { color: #ff6b6b; }
+
+  .grade-desc { font-size: 1.05em; color: #c0b0d8; margin-top: 10px; }
+
+  .score-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  .score-item {
+    text-align: center;
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    min-width: 130px;
+  }
+
+  .score-item .num { font-size: 1.75em; font-weight: 700; }
+  .score-item .label { font-size: 0.82em; color: #8a7da8; margin-top: 4px; }
+
+  /* ── Dungeon Grid ── */
+  .section-title {
+    font-size: 1.3em;
+    color: #c9a0ff;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(128,80,200,0.2);
+  }
+
+  .dungeon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+
+  .dungeon-card {
+    background: linear-gradient(180deg, rgba(35,22,60,0.92) 0%, rgba(18,10,35,0.97) 100%);
+    border-radius: 14px;
+    border: 1px solid rgba(128,80,200,0.22);
+    padding: 18px;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .dungeon-card:hover { transform: translateY(-2px); border-color: rgba(180,120,255,0.45); }
+  .dungeon-card.card-green { border-left: 3px solid rgba(95,232,138,0.7); }
+  .dungeon-card.card-yellow { border-left: 3px solid rgba(240,208,80,0.7); }
+  .dungeon-card.card-red { border-left: 3px solid rgba(255,107,107,0.7); }
+
+  .dungeon-card h3 {
+    font-size: 1.1em;
+    color: #c9a0ff;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .key-badge {
+    background: rgba(100,60,180,0.5);
+    color: #d0b8ff;
+    font-size: 0.72em;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-weight: 700;
+  }
+
+  .status-badge {
+    font-size: 0.72em;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-weight: 700;
+    margin-left: auto;
+  }
+  .badge-green { background: rgba(40,180,80,0.25); color: #5fe88a; }
+  .badge-yellow { background: rgba(220,180,40,0.25); color: #f0d050; }
+  .badge-red { background: rgba(220,60,60,0.25); color: #ff6b6b; }
+
+  .affix-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+  .affix-chip {
+    font-size: 0.72em;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: rgba(80,50,130,0.4);
+    color: #b0a0d0;
+    border: 1px solid rgba(128,80,200,0.2);
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(128,80,200,0.1);
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { color: #8a7da8; font-size: 0.88em; }
+  .stat-value { font-size: 1.2em; font-weight: 700; }
+
+  .score-bar-container { margin-top: 12px; }
+  .score-bar-label {
+    font-size: 0.78em;
+    color: #8a7da8;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .score-bar-track {
+    height: 18px;
+    background: rgba(40,20,80,0.8);
+    border-radius: 9px;
+    overflow: hidden;
+    position: relative;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 9px;
+    transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+  }
+  .fill-green { background: linear-gradient(90deg, #2ea854, #5fe88a); }
+  .fill-yellow { background: linear-gradient(90deg, #b08800, #f0d050); }
+  .fill-red { background: linear-gradient(90deg, #a03030, #ff6b6b); }
+
+  /* ── Charts ── */
+  .chart-section {
+    background: linear-gradient(180deg, rgba(35,22,60,0.9) 0%, rgba(18,10,35,0.95) 100%);
+    border-radius: 14px;
+    border: 1px solid rgba(128,80,200,0.22);
+    padding: 24px;
+    margin-bottom: 22px;
+  }
+
+  .chart-section h2 {
+    font-size: 1.25em;
+    color: #c9a0ff;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+
+  .chart-container { position: relative; height: 280px; }
+
+  /* ── Fixes Section ── */
+  .fix-section {
+    background: linear-gradient(180deg, rgba(40,25,70,0.9) 0%, rgba(20,12,40,0.95) 100%);
+    border-radius: 14px;
+    border: 2px solid rgba(255,180,40,0.28);
+    padding: 28px;
+    margin-bottom: 22px;
+  }
+
+  .fix-section h2 {
+    font-size: 1.45em;
+    color: #f0c040;
+    text-align: center;
+    margin-bottom: 22px;
+  }
+
+  .fix-card {
+    background: rgba(0,0,0,0.28);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    border-left: 4px solid;
+    overflow: hidden;
+  }
+
+  .fix-card:last-child { margin-bottom: 0; }
+  .fix-card.fix-1 { border-left-color: #ff6b6b; }
+  .fix-card.fix-2 { border-left-color: #f0c040; }
+  .fix-card.fix-3 { border-left-color: #5fe88a; }
+
+  .fix-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 8px; }
+  .fix-number { font-size: 2em; font-weight: 900; line-height: 1; flex-shrink: 0; }
+  .fix-1 .fix-number { color: #ff6b6b; }
+  .fix-2 .fix-number { color: #f0c040; }
+  .fix-3 .fix-number { color: #5fe88a; }
+
+  .fix-title { font-size: 1.1em; color: #e0d8f0; font-weight: 600; }
+  .fix-desc { color: #a89bc2; font-size: 0.93em; line-height: 1.55; }
+
+  .fix-target {
+    margin-top: 10px;
+    padding: 5px 12px;
+    background: rgba(100,60,180,0.25);
+    border-radius: 8px;
+    display: inline-block;
+    font-size: 0.84em;
+    color: #d0b8ff;
+    border: 1px solid rgba(128,80,200,0.2);
+  }
+
+  /* ── WCL Notice ── */
+  .wcl-notice {
+    background: rgba(80,60,120,0.2);
+    border: 1px solid rgba(128,80,200,0.2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.84em;
+    color: #8a7da8;
+    text-align: center;
+    margin-bottom: 22px;
+  }
+  .wcl-notice a { color: #8a6dba; text-decoration: none; }
+  .wcl-notice a:hover { color: #c9a0ff; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 24px;
+    color: #5a4d78;
+    font-size: 0.84em;
+  }
+  .footer a { color: #8a6dba; text-decoration: none; }
+
+  /* ── Utilities ── */
+  .green { color: #5fe88a; }
+  .yellow { color: #f0d050; }
+  .red { color: #ff6b6b; }
+  .blue { color: #60c0ff; }
+  .purple { color: #c9a0ff; }
+
+  [data-tip] { position: relative; cursor: help; border-bottom: 1px dotted #8a7da8; }
+  [data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20,10,40,0.97);
+    border: 1px solid rgba(128,80,200,0.5);
+    color: #e0d8f0;
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 0.82em;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    body { padding: 12px; }
+    .header h1 { font-size: 1.7em; }
+    .grade { font-size: 3.6em; }
+    .dungeon-grid { grid-template-columns: 1fr; }
+    .score-row { gap: 10px; }
+    .score-item { min-width: 100px; padding: 10px 12px; }
+    .score-item .num { font-size: 1.4em; }
+    .chart-container { height: 220px; }
+    .form-row { flex-direction: column; }
+    .analyze-btn { width: 100%; }
+    .char-banner { flex-direction: column; text-align: center; }
+    .char-meta { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── SEARCH SECTION ── -->
+<div class="search-section">
+  <div class="header">
+    <h1>⚔ WoW M+ Analyzer</h1>
+    <div class="subtitle">Enter any character to generate a full Mythic+ performance dashboard</div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="charName">Character Name</label>
+        <input type="text" id="charName" class="form-input" placeholder="e.g. Llimp" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="server">Realm</label>
+        <input type="text" id="server" class="form-input" placeholder="e.g. Illidan" autocomplete="off" />
+      </div>
+      <div class="form-group region-group">
+        <label for="region">Region</label>
+        <select id="region" class="form-select">
+          <option value="us">US</option>
+          <option value="eu">EU</option>
+          <option value="tw">TW</option>
+          <option value="kr">KR</option>
+          <option value="cn">CN</option>
+        </select>
+      </div>
+      <div class="form-group btn-group">
+        <label>&nbsp;</label>
+        <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">Analyze</button>
+      </div>
+    </div>
+
+    <div class="loading-box" id="loadingBox">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loadingText">Fetching character data…</div>
+    </div>
+
+    <div class="error-box" id="errorBox">
+      <strong>Could not fetch data</strong>
+      <span id="errorMsg">Unknown error.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── RESULTS ── -->
+<div id="results">
+
+  <!-- Character Banner -->
+  <div class="char-banner" id="charBanner"></div>
+
+  <!-- Overall Grade -->
+  <div class="grade-box" id="gradeBox"></div>
+
+  <!-- Dungeon Grid -->
+  <div class="section-title">Dungeon Breakdown</div>
+  <div class="dungeon-grid" id="dungeonGrid"></div>
+
+  <!-- Chart: Score Comparison -->
+  <div class="chart-section">
+    <h2>Your Score vs. Estimated Max at Each Key Level</h2>
+    <div class="chart-container">
+      <canvas id="scoreChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart: Time Comparison -->
+  <div class="chart-section">
+    <h2>Your Clear Time vs. Par Time (Minutes)</h2>
+    <div class="chart-container">
+      <canvas id="timeChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Top 3 Fixes -->
+  <div class="fix-section" id="fixSection"></div>
+
+  <!-- WCL Notice -->
+  <div class="wcl-notice" id="wclNotice"></div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Data sourced from <a href="https://raider.io" target="_blank">Raider.IO</a> public API &nbsp;·&nbsp;
+    WoW M+ Analyzer &nbsp;·&nbsp; Not affiliated with Blizzard Entertainment
+  </div>
+
+</div>
+
+<script>
+// ── Chart instances (destroy before recreating) ──
+let scoreChartInstance = null;
+let timeChartInstance = null;
+
+// ── Enter key support ──
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const active = document.activeElement;
+    if (active && ['charName', 'server', 'region'].includes(active.id)) {
+      runAnalysis();
+    }
+  }
+});
+
+// ── Grade letter → CSS class prefix ──
+function gradeClass(letter) {
+  if (!letter) return 'C';
+  const l = letter[0];
+  if (l === 'A') return 'A';
+  if (l === 'B') return 'B';
+  if (l === 'C') return 'C';
+  if (l === 'D') return 'D';
+  return 'F';
+}
+
+// ── Format number with commas ──
+function fmtNum(n) {
+  if (n == null) return '—';
+  return Number(n).toLocaleString();
+}
+
+// ── Role icon ──
+function roleIcon(role) {
+  if (!role) return '⚔';
+  const r = role.toLowerCase();
+  if (r === 'tank') return '🛡';
+  if (r === 'healer') return '💚';
+  return '⚔';
+}
+
+// ── Class color ──
+const CLASS_COLORS = {
+  'Death Knight': '#C41E3A', 'Demon Hunter': '#A330C9', 'Druid': '#FF7C0A',
+  'Evoker': '#33937F', 'Hunter': '#AAD372', 'Mage': '#3FC7EB',
+  'Monk': '#00FF98', 'Paladin': '#F48CBA', 'Priest': '#FFFFFF',
+  'Rogue': '#FFF468', 'Shaman': '#0070DD', 'Warlock': '#8788EE',
+  'Warrior': '#C69B3A'
+};
+
+// ── Main analyze function ──
+async function runAnalysis() {
+  const name = document.getElementById('charName').value.trim();
+  const server = document.getElementById('server').value.trim();
+  const region = document.getElementById('region').value;
+
+  if (!name || !server) {
+    showError('Please enter both a character name and realm.');
+    return;
+  }
+
+  setLoading(true);
+  hideError();
+  hideResults();
+
+  try {
+    setLoadingText('Fetching character data from Raider.IO…');
+
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ characterName: name, server, region })
+    });
+
+    const json = await res.json();
+
+    if (!json.success) {
+      throw new Error(json.error || 'Unknown server error.');
+    }
+
+    setLoadingText('Rendering dashboard…');
+    await sleep(300);
+    renderResults(json.data);
+
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function setLoading(on) {
+  document.getElementById('loadingBox').style.display = on ? 'block' : 'none';
+  document.getElementById('analyzeBtn').disabled = on;
+}
+function setLoadingText(t) { document.getElementById('loadingText').textContent = t; }
+function showError(msg) {
+  document.getElementById('errorMsg').textContent = msg;
+  document.getElementById('errorBox').style.display = 'block';
+}
+function hideError() { document.getElementById('errorBox').style.display = 'none'; }
+function hideResults() { document.getElementById('results').style.display = 'none'; }
+
+// ── Render ──
+function renderResults(data) {
+  const { character, grade, dungeons, fixes, wclData } = data;
+
+  renderCharBanner(character, grade);
+  renderGradeBox(grade);
+  renderDungeons(dungeons, grade.metrics.overallScore);
+  renderCharts(dungeons);
+  renderFixes(fixes);
+  renderWCLNotice(character, wclData);
+
+  document.getElementById('results').style.display = 'block';
+  window.scrollTo({ top: document.querySelector('.search-section').offsetTop + document.querySelector('.search-section').offsetHeight + 20, behavior: 'smooth' });
+}
+
+function renderCharBanner(char, grade) {
+  const classColor = CLASS_COLORS[char.class] || '#c9a0ff';
+  const ilvlStr = char.ilvl ? `<span>${char.ilvl}</span> ilvl` : '';
+  const rankStr = grade.metrics.rankRegion
+    ? `<span>#${fmtNum(grade.metrics.rankRegion)}</span> ${(char.region || 'US')} M+`
+    : '';
+  const rankRealmStr = grade.metrics.rankRealm
+    ? `<span>#${fmtNum(grade.metrics.rankRealm)}</span> ${char.realm} M+`
+    : '';
+
+  const metaItems = [
+    ilvlStr ? `<div class="char-meta-item"><div class="meta-val" style="color:#c9a0ff">${char.ilvl}</div><div class="meta-lbl">Item Level</div></div>` : '',
+    rankStr ? `<div class="char-meta-item"><div class="meta-val" style="color:#f0d050">#${fmtNum(grade.metrics.rankRegion)}</div><div class="meta-lbl">${char.region} Rank</div></div>` : '',
+    rankRealmStr ? `<div class="char-meta-item"><div class="meta-val" style="color:#5fe88a">#${fmtNum(grade.metrics.rankRealm)}</div><div class="meta-lbl">Realm Rank</div></div>` : ''
+  ].filter(Boolean).join('');
+
+  const avatarHtml = char.thumbnail
+    ? `<img class="char-avatar" src="${char.thumbnail}" alt="${char.name}" onerror="this.replaceWith(makePlaceholder())">`
+    : `<div class="char-avatar-placeholder">${roleIcon(char.role)}</div>`;
+
+  document.getElementById('charBanner').innerHTML = `
+    ${avatarHtml}
+    <div class="char-info">
+      <div class="char-name" style="color:${classColor}">${char.name}</div>
+      <div class="char-details">
+        <span>${char.spec || ''}</span> ${char.class || ''} &nbsp;·&nbsp; ${char.realm}-${char.region}
+      </div>
+    </div>
+    ${metaItems ? `<div class="char-meta">${metaItems}</div>` : ''}
+    ${char.rioUrl ? `<a class="rio-link" href="${char.rioUrl}" target="_blank">View on Raider.IO →</a>` : ''}
+  `;
+}
+
+function makePlaceholder() {
+  const div = document.createElement('div');
+  div.className = 'char-avatar-placeholder';
+  div.textContent = '⚔';
+  return div;
+}
+
+function renderGradeBox(grade) {
+  const m = grade.metrics;
+  const gc = gradeClass(grade.letter);
+
+  const dpsNum = m.dpsScore ? `<div class="score-item"><div class="num" style="color:#5fe88a">${fmtNum(Math.round(m.dpsScore))}</div><div class="label" data-tip="Your DPS spec M+ score">DPS Score</div></div>` : '';
+  const healNum = m.healScore ? `<div class="score-item"><div class="num" style="color:#60c0ff">${fmtNum(Math.round(m.healScore))}</div><div class="label" data-tip="Your Healer M+ score">Healer Score</div></div>` : '';
+  const tankNum = m.tankScore ? `<div class="score-item"><div class="num" style="color:#ff8a5c">${fmtNum(Math.round(m.tankScore))}</div><div class="label" data-tip="Your Tank M+ score">Tank Score</div></div>` : '';
+
+  document.getElementById('gradeBox').innerHTML = `
+    <div class="grade-label">OVERALL GRADE</div>
+    <div class="grade grade-${gc}">${grade.letter}</div>
+    <div class="grade-desc">${grade.description}</div>
+    <div class="score-row">
+      <div class="score-item">
+        <div class="num" style="color:#c9a0ff">${fmtNum(Math.round(grade.score))}</div>
+        <div class="label" data-tip="Your total M+ score across all dungeons (Raider.IO)">M+ Score</div>
+      </div>
+      <div class="score-item">
+        <div class="num" style="color:${m.timingRatePct >= 80 ? '#5fe88a' : m.timingRatePct >= 50 ? '#f0d050' : '#ff6b6b'}">${m.timingRatePct}%</div>
+        <div class="label" data-tip="Percentage of your best dungeon runs that were timed (1+ upgrade)">Timing Rate</div>
+      </div>
+      <div class="score-item">
+        <div class="num" style="color:#a89bc2">${m.avgKeyLevel > 0 ? m.avgKeyLevel.toFixed(1) : '—'}</div>
+        <div class="label" data-tip="Average key level across all your best dungeon runs">Avg Key Level</div>
+      </div>
+      <div class="score-item">
+        <div class="num" style="color:#f0d050">${m.scoreEfficiency > 0 ? m.scoreEfficiency.toFixed(1) + '%' : '—'}</div>
+        <div class="label" data-tip="How close your dungeon scores are to the estimated max at your current key levels">Score Efficiency</div>
+      </div>
+      ${dpsNum}${healNum}${tankNum}
+    </div>
+  `;
+}
+
+function renderDungeons(dungeons, maxOverallScore) {
+  if (!dungeons || dungeons.length === 0) {
+    document.getElementById('dungeonGrid').innerHTML = '<div style="color:#8a7da8;padding:20px;text-align:center">No Mythic+ runs found for this character.</div>';
+    return;
+  }
+
+  const maxScore = Math.max(...dungeons.map(d => d.score), 1);
+
+  document.getElementById('dungeonGrid').innerHTML = dungeons.map(d => {
+    const fillClass = d.status === 'green' ? 'fill-green' : d.status === 'yellow' ? 'fill-yellow' : 'fill-red';
+    const barPct = Math.min(100, (d.score / maxScore) * 100).toFixed(1);
+    const timeColor = d.status === 'green' ? '#5fe88a' : d.status === 'yellow' ? '#f0d050' : '#ff6b6b';
+    const timeSavedColor = d.timeSavedMs >= 0 ? '#5fe88a' : '#ff6b6b';
+    const upgradeStars = d.upgrades >= 3 ? '⭐⭐⭐' : d.upgrades === 2 ? '⭐⭐' : d.upgrades === 1 ? '⭐' : '✗';
+    const upgradeLabel = d.upgrades >= 3 ? '+3 (Perfect)' : d.upgrades === 2 ? '+2' : d.upgrades === 1 ? '+1' : 'Depleted';
+    const badgeClass = `badge-${d.status}`;
+    const cardClass = `card-${d.status}`;
+
+    const affixChips = d.affixes.map(a => `<span class="affix-chip">${a}</span>`).join('');
+    const dungeonUrl = d.url ? `<a href="${d.url}" target="_blank" style="color:#8a6dba;font-size:0.8em;text-decoration:none">View Log →</a>` : '';
+
+    return `
+      <div class="dungeon-card ${cardClass}">
+        <h3>
+          ${d.name}
+          <span class="key-badge">+${d.keyLevel}</span>
+          <span class="status-badge ${badgeClass}">${upgradeLabel}</span>
+        </h3>
+        ${affixChips ? `<div class="affix-row">${affixChips}</div>` : ''}
+        <div class="stat-row">
+          <span class="stat-label">Score</span>
+          <span class="stat-value" style="color:#c9a0ff">${d.score.toFixed(1)}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Clear Time</span>
+          <span class="stat-value" style="color:${timeColor}">${d.clearTimeFormatted}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Par Time</span>
+          <span class="stat-value" style="color:#8a7da8">${d.parTimeFormatted}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Time vs Timer</span>
+          <span class="stat-value" style="color:${timeSavedColor}">${d.timeSavedFormatted}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Time Used</span>
+          <span class="stat-value" style="color:${timeColor}">${d.timePercent}%</span>
+        </div>
+        <div class="score-bar-container">
+          <div class="score-bar-label">
+            <span>Score vs Your Best Dungeon</span>
+            <span>${barPct}%</span>
+          </div>
+          <div class="score-bar-track">
+            <div class="score-bar-fill ${fillClass}" style="width:${barPct}%"></div>
+          </div>
+        </div>
+        ${dungeonUrl ? `<div style="margin-top:10px;text-align:right">${dungeonUrl}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCharts(dungeons) {
+  if (!dungeons || dungeons.length === 0) return;
+
+  // Chart.js global defaults for dark theme
+  Chart.defaults.color = '#8a7da8';
+  Chart.defaults.borderColor = 'rgba(128,80,200,0.15)';
+  Chart.defaults.font.family = "'Segoe UI', Tahoma, sans-serif";
+
+  const labels = dungeons.map(d => d.shortName || d.name.split(' ').map(w => w[0]).join(''));
+
+  // ── Score Chart ──
+  if (scoreChartInstance) { scoreChartInstance.destroy(); scoreChartInstance = null; }
+  const ctx1 = document.getElementById('scoreChart').getContext('2d');
+  scoreChartInstance = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Your Score',
+          data: dungeons.map(d => parseFloat(d.score.toFixed(1))),
+          backgroundColor: 'rgba(150,80,220,0.65)',
+          borderColor: 'rgba(180,110,255,1)',
+          borderWidth: 1,
+          borderRadius: 6
+        },
+        {
+          label: 'Est. Max at This Key Level',
+          data: dungeons.map(d => d.estimatedMaxScore),
+          backgroundColor: 'rgba(80,150,220,0.35)',
+          borderColor: 'rgba(80,180,255,0.8)',
+          borderWidth: 1,
+          borderRadius: 6
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#a89bc2', padding: 16, font: { size: 12 } } },
+        tooltip: {
+          backgroundColor: 'rgba(20,10,40,0.95)',
+          borderColor: 'rgba(128,80,200,0.4)',
+          borderWidth: 1,
+          titleColor: '#c9a0ff',
+          bodyColor: '#e0d8f0',
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} pts`
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#a89bc2' }, grid: { color: 'rgba(128,80,200,0.1)' } },
+        y: {
+          ticks: { color: '#a89bc2' },
+          grid: { color: 'rgba(128,80,200,0.1)' },
+          title: { display: true, text: 'Score', color: '#8a7da8' }
+        }
+      }
+    }
+  });
+
+  // ── Time Chart ──
+  if (timeChartInstance) { timeChartInstance.destroy(); timeChartInstance = null; }
+  const ctx2 = document.getElementById('timeChart').getContext('2d');
+  const barColors = dungeons.map(d =>
+    d.status === 'green' ? 'rgba(95,232,138,0.65)' :
+    d.status === 'yellow' ? 'rgba(240,208,80,0.65)' :
+    'rgba(255,107,107,0.65)'
+  );
+  timeChartInstance = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Your Clear Time',
+          data: dungeons.map(d => parseFloat((d.clearTimeMs / 60000).toFixed(2))),
+          backgroundColor: barColors,
+          borderColor: barColors.map(c => c.replace('0.65', '1')),
+          borderWidth: 1,
+          borderRadius: 6,
+          order: 2
+        },
+        {
+          label: 'Par Time (Limit)',
+          type: 'line',
+          data: dungeons.map(d => parseFloat((d.parTimeMs / 60000).toFixed(2))),
+          borderColor: 'rgba(220,80,80,0.85)',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [6, 3],
+          pointRadius: 5,
+          pointBackgroundColor: 'rgba(220,80,80,0.85)',
+          tension: 0.1,
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#a89bc2', padding: 16, font: { size: 12 } } },
+        tooltip: {
+          backgroundColor: 'rgba(20,10,40,0.95)',
+          borderColor: 'rgba(128,80,200,0.4)',
+          borderWidth: 1,
+          titleColor: '#c9a0ff',
+          bodyColor: '#e0d8f0',
+          callbacks: {
+            label: ctx => {
+              const val = ctx.parsed.y;
+              const mins = Math.floor(val);
+              const secs = Math.round((val - mins) * 60);
+              return `${ctx.dataset.label}: ${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#a89bc2' }, grid: { color: 'rgba(128,80,200,0.1)' } },
+        y: {
+          ticks: {
+            color: '#a89bc2',
+            callback: val => {
+              const m = Math.floor(val);
+              const s = Math.round((val - m) * 60);
+              return `${m}:${s.toString().padStart(2,'0')}`;
+            }
+          },
+          grid: { color: 'rgba(128,80,200,0.1)' },
+          title: { display: true, text: 'Minutes', color: '#8a7da8' }
+        }
+      }
+    }
+  });
+}
+
+function renderFixes(fixes) {
+  if (!fixes || fixes.length === 0) return;
+
+  const cards = fixes.map((f, i) => `
+    <div class="fix-card fix-${i + 1}">
+      <div class="fix-header">
+        <div class="fix-number">${i + 1}</div>
+        <div class="fix-title">${f.title}</div>
+      </div>
+      <div class="fix-desc">${f.description}</div>
+      <div class="fix-target">${f.target}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('fixSection').innerHTML = `
+    <h2>⚠ Top ${fixes.length} Things to Fix</h2>
+    ${cards}
+  `;
+}
+
+function renderWCLNotice(char, wclData) {
+  const wclUrl = `https://www.warcraftlogs.com/character/${(char.region || 'us').toLowerCase()}/${(char.realm || '').toLowerCase().replace(/\s+/g, '-')}/${(char.name || '').toLowerCase()}`;
+  const msg = wclData
+    ? `Warcraft Logs parse data found. For full raid performance details, <a href="${wclUrl}" target="_blank">view on WCL</a>.`
+    : `DPS parse percentiles require Warcraft Logs. <a href="${wclUrl}" target="_blank">View this character on WCL</a> for raid performance data.`;
+
+  document.getElementById('wclNotice').innerHTML = msg;
+}
+</script>
+</body>
+</html>

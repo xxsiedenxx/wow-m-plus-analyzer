@@ -1,0 +1,14 @@
+{
+  "name": "wow-m-plus-analyzer",
+  "version": "1.0.0",
+  "description": "World of Warcraft Mythic+ Performance Analyzer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0"
+  }
+}
