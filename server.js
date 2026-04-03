@@ -241,35 +241,70 @@ async function fetchRaiderIO(name, realm, region) {
   return response.data;
 }
 
+// WCL API v2: OAuth2 client credentials + GraphQL (replaces broken HTML scraping)
+// WCL returns 403 to server-side HTTP fetches, and __NEXT_DATA__ only has shell HTML.
+// Set WCL_CLIENT_ID and WCL_CLIENT_SECRET in Railway env (create at warcraftlogs.com/api/clients).
+let _wclToken = null;
+let _wclTokenExpiry = 0;
+
+async function getWCLToken() {
+  if (_wclToken && Date.now() < _wclTokenExpiry - 60000) return _wclToken;
+
+  const clientId = process.env.WCL_CLIENT_ID;
+  const clientSecret = process.env.WCL_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error('WCL_CLIENT_ID / WCL_CLIENT_SECRET not set — create API keys at warcraftlogs.com/api/clients');
+  }
+
+  const resp = await axios.post(
+    'https://www.warcraftlogs.com/oauth/token',
+    'grant_type=client_credentials',
+    {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      auth: { username: clientId, password: clientSecret },
+      timeout: 10000
+    }
+  );
+
+  _wclToken = resp.data.access_token;
+  _wclTokenExpiry = Date.now() + resp.data.expires_in * 1000;
+  return _wclToken;
+}
+
 async function fetchWCL(name, realm, region) {
+  const token = await getWCLToken();
   const realmSlug = realmToSlug(realm);
   const baseUrl = `https://www.warcraftlogs.com/character/${region.toLowerCase()}/${realmSlug}/${name.toLowerCase()}`;
-  // zone=47 = M+ zone in current WoW, metric=playerscore
-  const url = `${baseUrl}?zone=47&metric=playerscore`;
 
-  const response = await axios.get(url, {
-    headers: BROWSER_HEADERS,
-    timeout: 15000,
-    maxRedirects: 5
-  });
+  // zone 47 = The War Within M+ current season
+  const query = `
+    query GetCharacterRankings($name: String!, $serverSlug: String!, $serverRegion: String!) {
+      characterData {
+        character(name: $name, serverSlug: $serverSlug, serverRegion: $serverRegion) {
+          name
+          classID
+          zoneRankings(zoneID: 47)
+        }
+      }
+    }
+  `;
 
-  const $ = cheerio.load(response.data);
-  const nextDataText = $('#__NEXT_DATA__').html();
-  if (!nextDataText) return null;
+  const resp = await axios.post(
+    'https://www.warcraftlogs.com/api/v2/client',
+    { query, variables: { name: name.toLowerCase(), serverSlug: realmSlug, serverRegion: region.toUpperCase() } },
+    {
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      timeout: 15000
+    }
+  );
 
-  let nextData;
-  try { nextData = JSON.parse(nextDataText); } catch { return null; }
+  const errors = resp.data?.errors;
+  if (errors?.length) throw new Error(errors[0].message);
 
-  const pageProps = nextData?.props?.pageProps;
-  if (!pageProps) return null;
-
-  const character = pageProps.character || pageProps.characterData?.character;
+  const character = resp.data?.data?.characterData?.character;
   if (!character) return null;
 
-  // WCL embeds zone ranking data in character object
-  const zoneRankings = character.zoneRankings
-    || character.mythicPlusRankings
-    || null;
+  const zoneRankings = character.zoneRankings || null;
 
   const bestParse = zoneRankings?.bestPerformanceAverage ?? null;
   const medianParse = zoneRankings?.medianPerformanceAverage ?? null;
@@ -278,7 +313,7 @@ async function fetchWCL(name, realm, region) {
     encounter: r.encounter?.name || r.name || '',
     rankPercent: r.rankPercent ?? r.bestPercent ?? null,
     medianPercent: r.medianPercent ?? null,
-    bestAmount: r.bestAmount ?? null,      // DPS value
+    bestAmount: r.bestAmount ?? null,
     medianAmount: r.medianAmount ?? null,
     spec: r.spec ?? null
   }));
@@ -403,12 +438,13 @@ app.post('/api/analyze', async (req, res) => {
       throw new Error(`Could not reach Raider.IO: ${err.message}`);
     }
 
-    // WCL scraping — best effort, never blocks response
+    // WCL API v2 — best effort, never blocks response
     let wclData = null;
+    let wclError = null;
     try {
       wclData = await fetchWCL(characterName, server, region);
-    } catch (_e) {
-      // Non-critical: proceed without WCL data
+    } catch (e) {
+      wclError = e.message;
     }
 
     const dungeons = processBestRuns(rioData.mythic_plus_best_runs, rioData.mythic_plus_alternate_runs);
@@ -476,7 +512,8 @@ app.post('/api/analyze', async (req, res) => {
         },
         dungeons,
         fixes,
-        wclData: wclData || null
+        wclData: wclData || null,
+        wclError: wclError || null
       }
     });
 
